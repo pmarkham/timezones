@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timezones — Help</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='white' stroke-width='3.5'/%3E%3Cpath d='M32 22v10l7 5' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   Design tokens — kept in sync with index.html (:root blocks)
+   ============================================================ */
+:root {
+  color-scheme: dark;
+  --bg: #0a0e19;
+  --text: #edf0f7;
+  --dim: #98a1b3;
+  --dimmer: #6b7385;
+  --line: rgba(255, 255, 255, .08);
+  --line-strong: rgba(255, 255, 255, .17);
+  --a1: #6366f1;
+  --a2: #22d3ee;
+  --grad: linear-gradient(135deg, var(--a1), var(--a2));
+  --r-lg: 22px;
+  --r-md: 14px;
+  --fill: rgba(255, 255, 255, .05);
+  --fill-focus: rgba(255, 255, 255, .07);
+  --fill-hover: rgba(255, 255, 255, .1);
+  --chip-bg: rgba(255, 255, 255, .055);
+  --glow1: rgba(99, 102, 241, .16);
+  --glow2: rgba(34, 211, 238, .10);
+  --panel-bg: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .028));
+  --card-bg: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .025));
+  --base-bg: linear-gradient(180deg, #1a2038, #101423);
+  --shadow-panel: rgba(0, 0, 0, .30);
+  --badge-fg: #7dd3fc;
+  --badge-bg: rgba(34, 211, 238, .12);
+  --badge-line: rgba(34, 211, 238, .25);
+  --dst-fg: #fcd34d;
+  --dst-bg: rgba(245, 158, 11, .12);
+  --dst-line: rgba(245, 158, 11, .32);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef1f8;
+  --text: #101828;
+  --dim: #4d5871;
+  --dimmer: #67718a;
+  --line: rgba(15, 23, 42, .10);
+  --line-strong: rgba(15, 23, 42, .20);
+  --fill: rgba(15, 23, 42, .045);
+  --fill-focus: rgba(15, 23, 42, .06);
+  --fill-hover: rgba(15, 23, 42, .08);
+  --chip-bg: rgba(15, 23, 42, .05);
+  --glow1: rgba(99, 102, 241, .13);
+  --glow2: rgba(34, 211, 238, .10);
+  --panel-bg: linear-gradient(180deg, #ffffff, #fbfcff);
+  --card-bg: linear-gradient(180deg, #ffffff, #fafbfe);
+  --base-bg: linear-gradient(180deg, #ffffff, #f5f7fd);
+  --shadow-panel: rgba(15, 23, 42, .08);
+  --badge-fg: #0e7490;
+  --badge-bg: rgba(34, 211, 238, .16);
+  --badge-line: rgba(14, 116, 144, .30);
+  --dst-fg: #92400e;
+  --dst-bg: rgba(245, 158, 11, .14);
+  --dst-line: rgba(180, 83, 9, .35);
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: dark; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1100px 700px at 85% -10%, var(--glow1), transparent 60%),
+    radial-gradient(900px 650px at -15% 110%, var(--glow2), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: rgba(99, 102, 241, .45); }
+.hidden { display: none !important; }
+:focus-visible { outline: 2px solid rgba(99, 102, 241, .8); outline-offset: 2px; }
+a { color: inherit; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 60px; }
+
+/* Header — same components as the app */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 36px; height: 36px; border-radius: 11px;
+  background: var(--grad);
+  display: grid; place-items: center;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, .4);
+  flex: none;
+}
+.logo svg { width: 20px; height: 20px; display: block; }
+.brand h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.3px; display: flex; align-items: center; gap: 9px; }
+.hbadge {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  background: var(--grad); color: #fff;
+  padding: 3px 9px; border-radius: 999px;
+}
+.controls { display: flex; align-items: center; gap: 10px; }
+.theme-btn {
+  appearance: none; cursor: pointer;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--dim);
+  text-decoration: none;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.theme-btn:hover { background: var(--fill-hover); border-color: var(--line-strong); color: var(--text); }
+.theme-btn svg { width: 17px; height: 17px; }
+.i-sun { display: block; }
+.i-moon { display: none; }
+[data-theme="light"] .i-sun { display: none; }
+[data-theme="light"] .i-moon { display: block; }
+.seg {
+  display: flex; gap: 3px;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px;
+}
+.seg button {
+  appearance: none; border: 0; background: transparent;
+  color: var(--dim); font: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 5px 13px; border-radius: 999px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--grad); color: #fff; }
+.linkbtn {
+  appearance: none; background: none; border: 0;
+  color: var(--dim); font: inherit; font-size: 12.5px;
+  text-decoration: underline; cursor: pointer;
+}
+.linkbtn:hover { color: var(--text); }
+
+/* ============================================================
+   Documentation typography
+   ============================================================ */
+.doc { max-width: 1020px; margin: 0 auto; }
+.dochead { margin: 10px 0 34px; }
+.dochead h2 {
+  margin: 0 0 10px;
+  font-size: clamp(26px, 4vw, 34px); font-weight: 750; letter-spacing: -.8px;
+}
+.dochead p { margin: 0; font-size: 15.5px; line-height: 1.65; color: var(--dim); max-width: 640px; }
+.doc section { margin: 44px 0; }
+.doc section > h2 {
+  margin: 0 0 6px; font-size: 21px; font-weight: 720; letter-spacing: -.4px;
+  display: flex; align-items: center; gap: 10px;
+}
+.doc section > h2 .secnum {
+  font-size: 12px; font-weight: 700;
+  background: var(--grad); color: #fff;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; flex: none;
+}
+.doc section > .secdesc { margin: 0 0 18px; font-size: 14px; color: var(--dim); line-height: 1.6; max-width: 700px; }
+.doc p, .doc li { font-size: 14px; line-height: 1.65; color: var(--dim); }
+.doc b, .doc strong { color: var(--text); font-weight: 650; }
+.kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; color: var(--text);
+  background: var(--fill); border: 1px solid var(--line);
+  border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px;
+}
+
+/* ============================================================
+   Annotated figures: numbered callouts + legend
+   ============================================================ */
+.anno { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(250px, 1fr); gap: 30px; align-items: start; }
+/* Explicit cell placement: the figures' children include a <figcaption>
+   (a direct child of <figure>), which would otherwise disrupt the grid's
+   auto-placement and push the legend down to the diagram's bottom edge. */
+.stage { position: relative; min-width: 0; grid-column: 1; grid-row: 1; }
+.legend { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; grid-column: 2; grid-row: 1; }
+.legend li {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 13px; line-height: 1.5; color: var(--dim);
+  background: var(--fill); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 10px 12px;
+}
+.legend b { color: var(--text); }
+.lnum {
+  flex: none; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--grad); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: grid; place-items: center; margin-top: 1px;
+}
+
+/* the little circled numbers that sit on the mock UI */
+.fpart { position: relative; }
+.num {
+  position: absolute; z-index: 3;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--grad); color: #fff;
+  font-size: 12px; font-weight: 700;
+  display: grid; place-items: center;
+  box-shadow: 0 3px 10px rgba(99, 102, 241, .45);
+}
+.n-tl { top: -9px; left: -9px; }
+.n-tr { top: -9px; right: -9px; }
+.n-bl { bottom: -9px; left: -9px; }
+.n-br { bottom: -9px; right: -9px; }
+.n-r { top: 50%; right: -11px; transform: translateY(-50%); }
+.hl { outline: 1.5px dashed rgba(99, 102, 241, .55); outline-offset: 4px; border-radius: var(--r-md); }
+
+/* ============================================================
+   Mock UI components (static replicas of the app, token-driven)
+   ============================================================ */
+.flab {
+  display: block; font-size: 11px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 7px; white-space: nowrap;
+}
+.min {
+  display: flex; align-items: center; gap: 8px; justify-content: space-between;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font-size: 14px;
+  padding: 9px 13px;
+  white-space: nowrap; overflow: hidden;
+}
+.min .dim { color: var(--dimmer); font-size: 13px; }
+.min svg { width: 15px; height: 15px; flex: none; color: var(--dim); }
+.mbtn {
+  font: inherit; font-size: 14px; font-weight: 600;
+  border-radius: var(--r-md); padding: 10px 18px;
+  cursor: default; border: 1px solid transparent;
+}
+.mbtn.ghost { background: var(--fill); border-color: var(--line); color: var(--text); }
+.mbtn.primary { background: var(--grad); color: #fff; box-shadow: 0 6px 18px rgba(99, 102, 241, .35); }
+
+.mpanel {
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: 0 18px 50px var(--shadow-panel);
+}
+.mpanel > .prow { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.mpanel .fgrow { flex: 2 1 260px; min-width: 0; }
+.mpanel .fdate { flex: 1 1 158px; min-width: 0; }
+.mpanel .ftime { flex: 1 1 150px; min-width: 0; }
+.mpanel .fbtn { padding-bottom: 0; }
+
+.mcard {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  box-shadow: 0 14px 40px var(--shadow-panel);
+}
+.mcard.base {
+  border: 1px solid transparent;
+  /* Gradient ring as a double background: opaque base fill clipped to the
+     padding-box, gradient in the border — the same technique the app uses
+     for .card.base. (A masked ::before with a negative z-index would escape
+     the card's stacking context and paint behind the panel, hiding the ring
+     in light mode, where the panel background is opaque.) */
+  background: var(--base-bg) padding-box, var(--grad) border-box;
+  box-shadow: 0 16px 46px var(--shadow-panel);
+}
+.mcard + .mcard, .mgrid > * { min-width: 0; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 14px; }
+
+.mtop { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mloc { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.mloc .city { font-size: 15.5px; font-weight: 650; }
+.mloc .coun { font-size: 12.5px; color: var(--dim); }
+.mtop-actions { display: flex; align-items: center; gap: 4px; }
+.grip { color: var(--dimmer); opacity: .8; font-size: 13px; letter-spacing: -1px; user-select: none; }
+.rm {
+  appearance: none; border: 0; background: transparent;
+  color: var(--dimmer); width: 26px; height: 26px; border-radius: 50%;
+  font-size: 15px; line-height: 1; flex: none;
+}
+.chip {
+  display: inline-block;
+  font-size: 11.5px; color: var(--dim);
+  background: var(--chip-bg);
+  border: 1px solid var(--line);
+  padding: 3px 10px; border-radius: 999px;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.chip.base-pill {
+  background: var(--grad); border-color: transparent;
+  color: #fff; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; font-size: 10.5px; padding: 4px 11px;
+}
+.clock {
+  font-size: clamp(28px, 3.2vw, 38px); font-weight: 650;
+  letter-spacing: -.8px; font-variant-numeric: tabular-nums; line-height: 1.1;
+  margin-top: 12px;
+}
+.cdate { margin-top: 3px; font-size: 13px; color: var(--dim); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sep { height: 1px; background: var(--line); margin: 14px 0 12px; }
+.convlbl {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dimmer); margin-bottom: 5px;
+}
+.conv { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.convt { font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.convd { font-size: 12.5px; color: var(--dim); }
+.daybadge {
+  font-size: 11px; font-weight: 600;
+  color: var(--badge-fg); background: var(--badge-bg);
+  border: 1px solid var(--badge-line);
+  padding: 2px 9px; border-radius: 999px;
+}
+.dstbadge {
+  font-size: 11px; font-weight: 600;
+  color: var(--dst-fg); background: var(--dst-bg);
+  border: 1px solid var(--dst-line);
+  padding: 2px 9px; border-radius: 999px;
+}
+.base-cols { display: flex; gap: 36px; flex-wrap: wrap; margin-top: 4px; }
+.base-cols .convlbl { margin-top: 18px; }
+.base-cols .clock { margin-top: 0; }
+.base-cols .conv { margin-top: 14px; }
+
+/* the mock header (inside the layout figure) */
+.mockheader {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.mockheader .brand h1 { font-size: 17px; }
+.mockheader .logo { width: 30px; height: 30px; border-radius: 9px; }
+.mockheader .logo svg { width: 16px; height: 16px; }
+.addrow { display: flex; gap: 10px; margin-top: 14px; align-items: flex-end; }
+.addrow .min { flex: 1; }
+
+figcaption.figcap { grid-column: 1; grid-row: 2; margin-top: 12px; font-size: 12px; color: var(--dimmer); line-height: 1.5; }
+
+/* ============================================================
+   Conversion flow diagram (boxes + arrows)
+   ============================================================ */
+.flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px minmax(0, 1fr) 74px minmax(0, 1fr);
+  grid-template-rows: auto 12px auto 76px auto;
+  align-items: center;
+  column-gap: 4px;
+}
+.fbox {
+  grid-row: 1;
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 14px;
+  text-align: center;
+  box-shadow: 0 14px 40px var(--shadow-panel);
+}
+.fbox.base {
+  border: 1px solid transparent;
+  /* same gradient-ring technique as the base card above */
+  background: var(--base-bg) padding-box, var(--grad) border-box;
+}
+.fbox .place { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.fbox .t { font-size: 24px; font-weight: 700; letter-spacing: -.5px; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.fbox .d { font-size: 12px; color: var(--dim); margin-top: 3px; }
+.fbox .tz { margin-top: 8px; }
+
+.fb-sydney { grid-column: 1; }
+.fb-utc { grid-column: 3; }
+.fb-nyc { grid-column: 5; }
+.fb-london { grid-row: 5; grid-column: 3; }
+
+.farrow { grid-row: 1; position: relative; height: 100%; display: flex; align-items: center; }
+.fa-1 { grid-column: 2; }
+.fa-2 { grid-column: 4; }
+.farrow::before {
+  content: ""; flex: 1; height: 1.5px;
+  background: var(--dimmer);
+}
+.farrow::after {
+  content: ""; flex: none;
+  border-left: 8px solid var(--dimmer);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+.farrow .flab2 {
+  position: absolute; left: 0; right: 0; bottom: 12px;
+  text-align: center;
+  font-size: 10.5px; font-weight: 600; color: var(--dim);
+  white-space: nowrap;
+}
+.farrow.down { flex-direction: column; justify-content: center; align-items: center; }
+.farrow.down::before { flex: none; width: 1.5px; height: 100%; }
+.farrow.down::after {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid var(--dimmer);
+}
+.farrow.down .flab2 { left: 12px; bottom: auto; top: 50%; transform: translateY(-50%); }
+.fa-3 { grid-row: 3; grid-column: 3; width: 1.5px; margin: 0 auto; align-self: stretch; }
+
+/* ============================================================
+   Chips table
+   ============================================================ */
+.chiprows { margin-top: 4px; }
+.chiprow {
+  display: grid; grid-template-columns: minmax(170px, .7fr) 1.3fr;
+  gap: 14px; align-items: start;
+  padding: 13px 2px;
+  border-bottom: 1px solid var(--line);
+}
+.chiprow:last-child { border-bottom: 0; }
+.chiprow .sample { display: flex; gap: 6px; flex-wrap: wrap; }
+.chiprow .what b { display: block; margin-bottom: 2px; font-size: 13.5px; }
+.chiprow .what p { margin: 0; font-size: 13px; }
+
+/* ============================================================
+   Controls grid
+   ============================================================ */
+.ctrlgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; }
+.ctrl {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--fill); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 13px 14px;
+}
+.ctrl .cico {
+  flex: none; width: 34px; height: 34px; border-radius: 10px;
+  background: var(--fill-hover); border: 1px solid var(--line);
+  display: grid; place-items: center; color: var(--dim);
+}
+.ctrl .cico svg { width: 17px; height: 17px; }
+.ctrl b { display: block; font-size: 13.5px; margin-bottom: 3px; }
+.ctrl p { margin: 0; font-size: 12.5px; line-height: 1.55; }
+
+/* ============================================================
+   FAQ
+   ============================================================ */
+.ques {
+  background: var(--fill); border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: 0;
+  margin-bottom: 10px;
+}
+.ques summary {
+  cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  font-size: 14.5px; font-weight: 650; color: var(--text);
+}
+.ques summary::-webkit-details-marker { display: none; }
+.ques summary .plus {
+  flex: none; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--fill-hover); border: 1px solid var(--line);
+  display: grid; place-items: center;
+  color: var(--dim); font-size: 14px; font-weight: 600;
+  transition: transform .15s;
+}
+.ques[open] summary .plus { transform: rotate(45deg); }
+.ques .ans { padding: 0 16px 15px 48px; }
+.ques .ans p { margin: 0; }
+
+.foot {
+  margin-top: 54px; padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.foot .fine { font-size: 12.5px; color: var(--dimmer); }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 900px) {
+  .anno { grid-template-columns: 1fr; }
+  /* stacked: the explicit cells above must release, or column 2 would
+     spawn an empty implicit track */
+  .anno .stage, .anno .legend, .anno figcaption { grid-column: 1; grid-row: auto; }
+}
+@media (max-width: 760px) {
+  .flow {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    row-gap: 4px;
+  }
+  .fb-sydney, .fb-utc, .fb-nyc, .fb-london, .fa-1, .fa-2, .fa-3 {
+    grid-column: 1; grid-row: auto;
+  }
+  /* stacked, the London branch must follow UTC (its source) — not New York —
+     so the labelled arrows stay semantically correct */
+  .fb-utc { grid-row: 3; }
+  .fa-3 { grid-row: 4; }
+  .fb-london { grid-row: 5; }
+  .fa-2 { grid-row: 6; }
+  .fb-nyc { grid-row: 7; }
+  .fa-1, .fa-2 { width: 1.5px; height: 44px; margin: 0 auto; display: block; position: relative; }
+  .fa-1::before, .fa-2::before { flex: none; width: 1.5px; height: 100%; }
+  .fa-1::after, .fa-2::after {
+    position: absolute; left: 50%; bottom: -1px; transform: translateX(-50%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 8px solid var(--dimmer);
+  }
+  .fa-1 .flab2, .fa-2 .flab2 { left: 12px; right: auto; bottom: auto; top: 50%; transform: translateY(-50%); }
+  .chiprow { grid-template-columns: 1fr; gap: 8px; }
+}
+</style>
+<script>
+/* Pre-paint theme (no-flash guard) — kept in sync with index.html: runs in
+   <head> before any body content can render. Same resolution as the app
+   (saved choice if explicit, otherwise prefers-color-scheme, otherwise
+   dark); only ever sets data-theme="light", dark is the static default. */
+(function () {
+  try {
+    var t = 'auto';
+    try {
+      var s = JSON.parse(localStorage.getItem('timezones.app.v1'));
+      if (s && (s.theme === 'dark' || s.theme === 'light')) t = s.theme;
+    } catch (e) { /* absent/unreadable save -> auto */ }
+    var darkPref = null;
+    try { darkPref = matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+    if (t === 'light' || (t === 'auto' && darkPref === false))
+      document.documentElement.dataset.theme = 'light';
+  } catch (e) { /* keep the dark default */ }
+})();
+</script>
+</head>
+<body>
+
+<header class="top wrap">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="19" fill="none" stroke="white" stroke-width="4"/>
+        <path d="M32 21v11l7.5 5.5" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <h1>Timezones <span class="hbadge">Help</span></h1>
+  </div>
+  <div class="controls">
+    <a class="linkbtn" href="index.html">← Back to the app</a>
+    <button class="theme-btn" id="themeBtn" type="button" aria-pressed="false"
+            aria-label="Switch to light mode" title="Switch to light mode">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/>
+      </svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap doc">
+
+  <div class="dochead">
+    <h2>How Timezones works</h2>
+    <p>One <b>base</b> timezone, and any number of other places. Every other place shows two things:
+       its <b>live current time</b> and the <b>converted time</b> for the date &amp; time you picked in the
+       base zone. It's a world clock, and it's a meeting planner — “what time is it in Tokyo when it's
+       3pm in London?” — answered at a glance.</p>
+  </div>
+
+  <!-- =========================================================
+       1 · The layout
+       ========================================================= -->
+  <section id="layout" aria-labelledby="layout-h">
+    <h2 id="layout-h"><span class="secnum">1</span> The layout</h2>
+    <p class="secdesc">Everything lives in one column: the controls on top, the source of truth in the
+       middle, your places in a card grid below. The numbers point at each piece.</p>
+
+    <figure class="anno" style="margin: 0;">
+      <div class="stage">
+        <!-- mock app header -->
+        <div class="mockheader">
+          <div class="brand">
+            <span class="logo" aria-hidden="true">
+              <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="19" fill="none" stroke="white" stroke-width="4"/>
+                <path d="M32 21v11l7.5 5.5" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <h1>Timezones</h1>
+          </div>
+          <div class="controls fpart">
+            <span class="num n-bl" aria-hidden="true">8</span>
+            <span class="theme-btn" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="1.2" fill="currentColor" stroke="none"/></svg>
+            </span>
+            <button class="theme-btn" type="button" aria-hidden="true" tabindex="-1">
+              <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+            </button>
+            <div class="seg" role="group" aria-hidden="true">
+              <button type="button">12h</button>
+              <button type="button" class="on">24h</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- mock base panel -->
+        <div class="mpanel fpart">
+          <span class="num n-tl" aria-hidden="true" style="top: -11px; left: 46%;">5</span>
+          <div class="prow">
+            <div class="fgrow fpart hl">
+              <span class="num n-tr" aria-hidden="true">1</span>
+              <span class="flab">Base timezone</span>
+              <div class="min">Sydney, Australia <span class="dim">▾</span></div>
+            </div>
+            <div class="fdate fpart hl">
+              <span class="num n-tr" aria-hidden="true">2</span>
+              <span class="flab">Date (YYYY-MM-DD)</span>
+              <div class="min">2026-10-04
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </div>
+            </div>
+            <div class="ftime fpart hl">
+              <span class="num n-tr" aria-hidden="true">3</span>
+              <span class="flab">Time</span>
+              <div class="min">13:30</div>
+            </div>
+            <div class="fbtn fpart hl">
+              <span class="num n-tr" aria-hidden="true">4</span>
+              <button class="mbtn ghost" type="button">Now</button>
+            </div>
+          </div>
+
+          <!-- mock base card -->
+          <div class="mcard base" style="margin-top: 16px;">
+            <div class="mtop">
+              <div class="mloc"><span class="city">Sydney</span><span class="coun">Australia</span></div>
+              <span class="chip base-pill">Base</span>
+            </div>
+            <div class="chips"><span class="chip">Australia/Sydney</span><span class="chip">UTC+11:00</span></div>
+            <div class="base-cols">
+              <div>
+                <div class="clock">13:30</div>
+                <div class="cdate">Sun, Oct 4, 2026 <span class="dstbadge" title="Daylight saving time in effect">DST</span></div>
+              </div>
+              <div>
+                <div class="convlbl">Selected time</div>
+                <div class="conv"><span class="convt">13:30</span><span class="convd">Sun, Oct 4</span><span class="dstbadge" title="Daylight saving time in effect">DST</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- mock add row -->
+        <div class="addrow fpart hl" style="border-radius: var(--r-md);">
+          <span class="num n-tr" aria-hidden="true">6</span>
+          <div class="min" style="padding: 10px 13px;">Add a city, IANA zone or UTC offset… <span></span></div>
+          <button class="mbtn primary" type="button">Add</button>
+        </div>
+
+        <!-- mock cards -->
+        <div class="mgrid fpart">
+          <span class="num n-tl" aria-hidden="true">7</span>
+          <article class="mcard">
+            <div class="mtop">
+              <div class="mloc"><span class="city">New York</span><span class="coun">United States</span></div>
+              <span class="mtop-actions"><span class="grip" aria-hidden="true">⠿</span><button class="rm" type="button" aria-hidden="true">×</button></span>
+            </div>
+            <div class="chips"><span class="chip">America/New_York</span><span class="chip">UTC−04:00</span><span class="chip">Sydney, Australia −15:00</span></div>
+            <div class="clock">22:30</div>
+            <div class="cdate">Sat, Oct 3, 2026 <span class="dstbadge">DST</span></div>
+            <div class="sep"></div>
+            <div class="convlbl">When it's 13:30 in Sydney, Australia</div>
+            <div class="conv"><span class="convt">22:30</span><span class="convd">Sat, Oct 3</span><span class="daybadge">−1 day</span><span class="dstbadge">DST</span></div>
+          </article>
+          <article class="mcard">
+            <div class="mtop">
+              <div class="mloc"><span class="city">London</span><span class="coun">United Kingdom</span></div>
+              <span class="mtop-actions"><span class="grip" aria-hidden="true">⠿</span><button class="rm" type="button" aria-hidden="true">×</button></span>
+            </div>
+            <div class="chips"><span class="chip">Europe/London</span><span class="chip">UTC+01:00</span><span class="chip">Sydney, Australia −10:00</span></div>
+            <div class="clock">03:30</div>
+            <div class="cdate">Sun, Oct 4, 2026 <span class="dstbadge">DST</span></div>
+            <div class="sep"></div>
+            <div class="convlbl">When it's 13:30 in Sydney, Australia</div>
+            <div class="conv"><span class="convt">03:30</span><span class="convd">Sun, Oct 4</span><span class="dstbadge">DST</span></div>
+          </article>
+        </div>
+      </div>
+
+      <figcaption class="figcap">A snapshot of the app. In the real thing the live clocks tick on the minute;
+      the selected blocks are frozen to the date &amp; time you picked.</figcaption>
+
+      <ol class="legend">
+        <li><span class="lnum">1</span><span><b>Base timezone.</b> Type a city, an IANA zone (<i>Europe/London</i>), or a UTC offset (<i>+05:30</i>) — suggestions appear as you type. Everything re-anchors to the new base; your date &amp; time are kept.</span></li>
+        <li><span class="lnum">2</span><span><b>Date.</b> Fixed <b>YYYY-MM-DD</b>: type it, or use the 📅 icon for the native date picker. Invalid dates flash an error and revert.</span></li>
+        <li><span class="lnum">3</span><span><b>Time.</b> <b>HH:MM</b> in 24h mode, <b>h:mm AM/PM</b> in 12h mode.</span></li>
+        <li><span class="lnum">4</span><span><b>Now.</b> Fills both fields with the base's current date &amp; time.</span></li>
+        <li><span class="lnum">5</span><span><b>The base card.</b> The source of truth: the base's live clock plus your selected moment, in an accent frame. It can't be dragged or removed.</span></li>
+        <li><span class="lnum">6</span><span><b>Add a location.</b> Same search as the base; a highlighted suggestion wins, or the <b>Add</b> button commits. The same place twice is rejected — two cities in one zone are fine.</span></li>
+        <li><span class="lnum">7</span><span><b>Location cards.</b> One per place: live clock + converted time. Drag to reorder, <b>×</b> to remove.</span></li>
+        <li><span class="lnum">8</span><span><b>Header controls.</b> <b>?</b> opens this page · the moon/sun sets the theme (auto by default) · <b>12h/24h</b> reformats every time on the page.</span></li>
+      </ol>
+    </figure>
+  </section>
+
+  <!-- =========================================================
+       2 · Anatomy of a card
+       ========================================================= -->
+  <section id="anatomy" aria-labelledby="anatomy-h">
+    <h2 id="anatomy-h"><span class="secnum">2</span> Anatomy of a card</h2>
+    <p class="secdesc">Each location card carries the same nine parts (the base card swaps 2–3 for its accent
+       frame and shows no relative chip).</p>
+
+    <figure class="anno" style="margin: 0;">
+      <div class="stage" style="max-width: 560px;">
+        <article class="mcard fpart" style="position: relative;">
+          <div class="mtop">
+            <div class="mloc fpart hl">
+              <span class="num n-tl" aria-hidden="true">1</span>
+              <span class="city">New York</span><span class="coun">United States</span>
+            </div>
+            <span class="mtop-actions">
+              <span class="grip fpart hl" style="padding: 4px;"><span class="num n-tr" aria-hidden="true">2</span>⠿</span>
+              <button class="rm fpart hl" type="button" aria-label="Remove"><span class="num n-tr" aria-hidden="true">3</span>×</button>
+            </span>
+          </div>
+          <div class="chips">
+            <span class="chip fpart hl"><span class="num n-tl" aria-hidden="true">4</span>America/New_York</span>
+            <span class="chip fpart hl"><span class="num n-tl" aria-hidden="true">5</span>UTC−04:00</span>
+            <span class="chip fpart hl"><span class="num n-tl" aria-hidden="true">6</span>Sydney, Australia −15:00</span>
+          </div>
+          <div class="fpart hl" style="display: inline-block; margin-top: 12px;">
+            <span class="num n-tr" aria-hidden="true">7</span>
+            <div class="clock" style="margin-top: 0;">22:30</div>
+          </div>
+          <div class="cdate fpart hl" style="display: flex;">
+            <span class="num n-tl" aria-hidden="true">8</span>
+            <span style="flex: 1;">Sat, Oct 3, 2026</span>
+            <span class="dstbadge">DST</span>
+          </div>
+          <div class="sep"></div>
+          <div class="convlbl fpart hl"><span class="num n-tl" aria-hidden="true">9</span>When it's 13:30 in Sydney, Australia</div>
+          <div class="conv">
+            <span class="convt">22:30</span><span class="convd">Sat, Oct 3</span>
+            <span class="daybadge">−1 day</span><span class="dstbadge">DST</span>
+          </div>
+        </article>
+      </div>
+
+      <ol class="legend">
+        <li><span class="lnum">1</span><span><b>Place + country.</b> The name you searched for. Two cities sharing a zone (Mumbai &amp; New Delhi) are two distinct places.</span></li>
+        <li><span class="lnum">2</span><span><b>Drag grip.</b> Drag this — or the whole card — to reorder; the others reflow around it. Drop outside the grid to cancel.</span></li>
+        <li><span class="lnum">3</span><span><b>Remove.</b> Takes only this place away (a same-zone twin survives).</span></li>
+        <li><span class="lnum">4</span><span><b>Zone chip.</b> The IANA zone behind the city. Fixed offsets have none — you typed a number, not a place.</span></li>
+        <li><span class="lnum">5</span><span><b>UTC offset chip.</b> The zone's <i>current</i> offset — it flips at DST; fixed offsets read <i>fixed · no DST</i>.</span></li>
+        <li><span class="lnum">6</span><span><b>Relative to base.</b> How far ahead/behind the base right now (<b>+</b> = ahead). Hidden while the base sits on a zero offset.</span></li>
+        <li><span class="lnum">7</span><span><b>Live clock.</b> That zone's current time, hour:minute — it refreshes exactly on the minute.</span></li>
+        <li><span class="lnum">8</span><span><b>Live date.</b> With the amber <b>DST</b> chip while daylight saving is in effect.</span></li>
+        <li><span class="lnum">9</span><span><b>The selected moment.</b> Your base date &amp; time, expressed here — with a <b>−1 day</b>/<b>+1 day</b> badge when the local date differs.</span></li>
+      </ol>
+    </figure>
+  </section>
+
+  <!-- =========================================================
+       3 · How a conversion works
+       ========================================================= -->
+  <section id="conversion" aria-labelledby="conversion-h">
+    <h2 id="conversion-h"><span class="secnum">3</span> How a conversion works</h2>
+    <p class="secdesc">A worked example with today's dates: you pick <b>Sun 4 Oct 2026, 13:30</b> in Sydney.
+       Every card resolves the same instant through UTC, then into its own zone — DST and all.</p>
+
+    <figure class="flow" role="img" aria-label="Sydney 13:30 converts to 02:30 UTC, which is 22:30 the previous day in New York and 03:30 the same day in London" style="margin: 0 0 8px;">
+      <div class="fbox base fb-sydney">
+        <div class="place">Sydney · base</div>
+        <div class="t">13:30</div>
+        <div class="d">Sun, 4 Oct</div>
+        <div class="tz"><span class="chip">AEDT = UTC+11</span></div>
+      </div>
+      <div class="farrow fa-1" aria-hidden="true"><span class="flab2">− 11 h</span></div>
+      <div class="fbox fb-utc">
+        <div class="place">UTC</div>
+        <div class="t">02:30</div>
+        <div class="d">Sun, 4 Oct</div>
+      </div>
+      <div class="farrow fa-2" aria-hidden="true"><span class="flab2">− 4 h (EDT)</span></div>
+      <div class="fbox fb-nyc">
+        <div class="place">New York</div>
+        <div class="t">22:30</div>
+        <div class="d">Sat, 3 Oct <span class="daybadge">−1 day</span></div>
+        <div class="tz"><span class="chip">EDT = UTC−4</span></div>
+      </div>
+      <div class="farrow down fa-3" aria-hidden="true"><span class="flab2">+ 1 h (BST)</span></div>
+      <div class="fbox fb-london">
+        <div class="place">London</div>
+        <div class="t">03:30</div>
+        <div class="d">Sun, 4 Oct</div>
+        <div class="tz"><span class="chip">BST = UTC+1</span></div>
+      </div>
+    </figure>
+
+    <p style="margin-top: 16px;">Your 13:30 in Sydney <b>is</b> 02:30 UTC <b>is</b> 22:30 the <i>previous evening</i> in New
+       York — the day shifted, so the card earns its <b>−1 day</b> badge — <b>is</b> 03:30 the same morning in London.
+       The app does exactly this for every card using the browser's IANA timezone database:
+       DST, half-hour offsets, and historical transitions are all handled natively. The amber
+       <b>DST</b> chip on each date line tells you when a zone is on its summer clock.</p>
+  </section>
+
+  <!-- =========================================================
+       4 · The chips, decoded
+       ========================================================= -->
+  <section id="chips" aria-labelledby="chips-h">
+    <h2 id="chips-h"><span class="secnum">4</span> The chips, decoded</h2>
+    <p class="secdesc">Small pills, each with one job:</p>
+
+    <div class="chiprows">
+      <div class="chiprow">
+        <div class="sample"><span class="chip">America/New_York</span></div>
+        <div class="what"><b>Zone name</b><p>The IANA timezone behind a city. Only shown for real zones — a fixed offset like <i>+05:30</i> has no zone name to show.</p></div>
+      </div>
+      <div class="chiprow">
+        <div class="sample"><span class="chip">UTC+05:30</span> <span class="chip">fixed · no DST</span></div>
+        <div class="what"><b>UTC offset</b><p>The zone's <i>current</i> offset from UTC. For IANA zones it flips when DST starts or ends; a fixed offset never does and carries the <i>fixed · no DST</i> note.</p></div>
+      </div>
+      <div class="chiprow">
+        <div class="sample"><span class="chip">Sydney, Australia −10:00</span></div>
+        <div class="what"><b>Relative to base</b><p>How far this place is from the base <i>right now</i>: <b>+</b> = ahead, <b>−</b> = behind. It flips automatically when <i>either</i> zone's DST changes. Hidden for grid cards whose base sits on a zero offset (the number would just duplicate the UTC chip).</p></div>
+      </div>
+      <div class="chiprow">
+        <div class="sample"><span class="daybadge">+1 day</span> <span class="daybadge">−1 day</span></div>
+        <div class="what"><b>Day shift</b><p>On the converted row only: the local <i>date</i> of your picked moment differs from the base date, so the badge makes the jump explicit.</p></div>
+      </div>
+      <div class="chiprow">
+        <div class="sample"><span class="dstbadge">DST</span></div>
+        <div class="what"><b>Daylight saving</b><p>On the date lines (live and converted, base and all cards): that zone is on its summer clock at that instant. Fixed offsets and UTC never get one.</p></div>
+      </div>
+      <div class="chiprow">
+        <div class="sample"><span class="chip base-pill">Base</span></div>
+        <div class="what"><b>Base tag</b><p>Marks the source of truth. The base card also wears the accent frame, and has no × and no drag — it's pinned.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       5 · Controls & gestures
+       ========================================================= -->
+  <section id="controls" aria-labelledby="controls-h">
+    <h2 id="controls-h"><span class="secnum">5</span> Controls &amp; gestures</h2>
+    <p class="secdesc">Everything you can do, at a glance:</p>
+
+    <div class="ctrlgrid">
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+        <div><b>Calendar icon</b><p>Opens the native date picker; your pick is written back as YYYY-MM-DD. Typing in the field works too (slashes accepted, normalised on commit).</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3.5 2.5"></path></svg></span>
+        <div><b>Now</b><p>Both fields jump to the base's current date &amp; time — then you can nudge either one.</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h10M4 15h6"></path><circle cx="18.5" cy="15" r="3.5"></circle></svg></span>
+        <div><b>12h / 24h toggle</b><p>Reformats every time on the page (default 24h). Your choice is saved.</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"></path></svg></span>
+        <div><b>Theme</b><p>Auto by default — follows your OS/browser dark mode, live. Click for a fixed choice; it sticks until you click again or Reset.</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg></span>
+        <div><b>Searching</b><p>Type a city, IANA zone, or offset. <span class="kbd">↑</span> <span class="kbd">↓</span> + <span class="kbd">Enter</span> pick a suggestion, <span class="kbd">Esc</span> dismisses. A highlighted suggestion beats raw text on <span class="kbd">Enter</span>.</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="8" cy="6" r="1.6"/><circle cx="14" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="14" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="14" cy="18" r="1.6"/></svg></span>
+        <div><b>Reorder by drag</b><p>Drag a card (or its ⠿ grip); the rest reflow around it and the new order is saved. Drop outside the grid to cancel. The base card is pinned.</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+        <div><b>Remove ×</b><p>Takes one place away. The same place can't be added twice, but two cities in one zone can coexist.</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg></span>
+        <div><b>Reset</b><p>In the footer: throws away your setup and returns to first-run — your local zone as base, a few popular cities, 24h, auto theme.</p></div>
+      </div>
+      <div class="ctrl">
+        <span class="cico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg></span>
+        <div><b>Export / Import</b><p>In the footer. <b>Export</b> downloads your whole setup as a JSON file; <b>Import</b> restores it. Your backup against clearing the browser's data — see below.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       6 · What the app remembers
+       ========================================================= -->
+  <section id="persistence" aria-labelledby="persistence-h">
+    <h2 id="persistence-h"><span class="secnum">6</span> What the app remembers</h2>
+    <p>Everything you touch — base, places, card order, date &amp; time, 12/24h, theme — is saved the moment
+       it changes, in your browser's <b>localStorage</b>. There's no account and no server: your setup lives in
+       this browser, and once the page has loaded it works fully offline.
+       (This page and the app share the same settings — your theme choice follows you here.)</p>
+    <p>Because it lives only in this browser, the app carries its own backup: <b>Export</b> in the footer
+       downloads your whole setup as a small JSON file (<b>timezones.json</b>) — base, places in their
+       on-screen order, the selected date &amp; time, 12/24h, and theme. If you ever clear the browser's
+       storage, <b>Import</b> that file to get everything back.</p>
+    <p>When you want a clean slate, <b>Reset</b> in the footer restores the first-run defaults.</p>
+  </section>
+
+  <!-- =========================================================
+       7 · FAQ
+       ========================================================= -->
+  <section id="faq" aria-labelledby="faq-h">
+    <h2 id="faq-h"><span class="secnum">7</span> Common questions</h2>
+    <p class="secdesc">The things people usually wonder:</p>
+
+    <details class="ques">
+      <summary><span class="plus" aria-hidden="true">+</span>Why is the date a text field instead of a normal date picker?</summary>
+      <div class="ans"><p>A visible native date input renders in your OS locale's format — DD/MM/YYYY in the UK, MM/DD/YYYY in the US — and can't be pinned to one. So the field is text in a fixed <b>YYYY-MM-DD</b>, with the native picker behind it: the calendar icon opens your browser's own calendar, and whatever you pick is written back as <b>YYYY-MM-DD</b>. Typing still works exactly as before.</p></div>
+    </details>
+    <details class="ques">
+      <summary><span class="plus" aria-hidden="true">+</span>I added Mumbai and New Delhi — their clocks look identical. Bug?</summary>
+      <div class="ans"><p>Not a bug: both cities are in the same IANA zone, <b>Asia/Kolkata</b>. Same zone, two different places — both are kept, each removable on its own, and the zone chip shows they share a timezone. Adding the <i>same place</i> twice is what gets rejected (with a brief red flash).</p></div>
+    </details>
+    <details class="ques">
+      <summary><span class="plus" aria-hidden="true">+</span>What if the time I pick falls on a daylight-saving transition?</summary>
+      <div class="ans"><p>The app resolves it without complaining: a time in a spring-forward gap snaps to the post-transition instant; an ambiguous fall-back time resolves to the later occurrence. The conversion is always a real instant — the rule is applied, not surfaced as an error.</p></div>
+    </details>
+    <details class="ques">
+      <summary><span class="plus" aria-hidden="true">+</span>Can I use half-hour offsets?</summary>
+      <div class="ans"><p>Yes — <b>+5:30</b>, <b>+5:45</b>, <b>+9:30</b> all parse (Kathmandu, Sri Lanka, Darwin). They render as fixed offsets with no DST, since a number can't carry DST rules; pick the real zone instead if you want that.</p></div>
+    </details>
+    <details class="ques">
+      <summary><span class="plus" aria-hidden="true">+</span>Do the clocks show seconds?</summary>
+      <div class="ans"><p>No — live clocks are hour:minute and refresh exactly on the minute boundary, so nothing jitters and digits never shift. And none of this needs a network: the page is self-contained and works offline.</p></div>
+    </details>
+    <details class="ques">
+      <summary><span class="plus" aria-hidden="true">+</span>I cleared my browser data — how do I get my setup back?</summary>
+      <div class="ans"><p>If you'd <b>Export</b>ed first, <b>Import</b> that JSON file from the footer and everything is restored — base, places in their order, date &amp; time, 12/24h, and theme. Without a backup file there's nothing to restore: there is no server copy, which is exactly why the backup exists.</p></div>
+    </details>
+  </section>
+
+  <footer class="foot">
+    <a class="linkbtn" href="index.html">← Back to the app</a>
+    <span class="fine">Timezones — a single file, zero dependencies, no server.</span>
+  </footer>
+
+</main>
+
+<script>
+/* Theme toggle — mirrors the app exactly: reads the shared 'timezones.app.v1'
+   save, changes ONLY the theme field (zones etc. are left untouched), and
+   follows the system live while in auto. */
+(function () {
+  var LS_KEY = 'timezones.app.v1';
+  var theme = 'auto';
+  try {
+    var s = JSON.parse(localStorage.getItem(LS_KEY));
+    if (s && (s.theme === 'dark' || s.theme === 'light')) theme = s.theme;
+  } catch (e) { /* absent/unreadable -> auto */ }
+  var systemMQ = null;
+  try { systemMQ = matchMedia('(prefers-color-scheme: dark)'); } catch (e) {}
+
+  var btn = document.getElementById('themeBtn');
+  function resolved() {
+    return theme === 'auto' ? (systemMQ ? (systemMQ.matches ? 'dark' : 'light') : 'dark') : theme;
+  }
+  function apply() {
+    var t = resolved();
+    document.documentElement.dataset.theme = t;
+    var light = t === 'light';
+    btn.setAttribute('aria-pressed', light ? 'true' : 'false');
+    var label = light ? 'Switch to dark mode' : 'Switch to light mode';
+    btn.setAttribute('aria-label', label);
+    btn.title = label;
+  }
+  btn.addEventListener('click', function () {
+    theme = resolved() === 'dark' ? 'light' : 'dark';
+    try {
+      var s = {};
+      try { s = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) {}
+      s.theme = theme;
+      localStorage.setItem(LS_KEY, JSON.stringify(s));
+    } catch (e) { /* private mode — non-fatal */ }
+    apply();
+  });
+  if (systemMQ && systemMQ.addEventListener) systemMQ.addEventListener('change', apply);
+  apply();
+})();
+</script>
+</body>
+</html>

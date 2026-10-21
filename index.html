@@ -1,0 +1,3319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timezones</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='white' stroke-width='3.5'/%3E%3Cpath d='M32 22v10l7 5' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   Design tokens
+   ============================================================ */
+:root {
+  color-scheme: dark;
+  --bg: #0a0e19;
+  --text: #edf0f7;
+  --dim: #98a1b3;
+  --dimmer: #6b7385;
+  --line: rgba(255, 255, 255, .08);
+  --line-strong: rgba(255, 255, 255, .17);
+  --a1: #6366f1;
+  --a2: #22d3ee;
+  --grad: linear-gradient(135deg, var(--a1), var(--a2));
+  --r-lg: 22px;
+  --r-md: 14px;
+  /* Surfaces, fills, shadows & accents that differ per theme (dark = current look) */
+  --fill: rgba(255, 255, 255, .05);
+  --fill-focus: rgba(255, 255, 255, .07);
+  --fill-hover: rgba(255, 255, 255, .1);
+  --chip-bg: rgba(255, 255, 255, .055);
+  --glow1: rgba(99, 102, 241, .16);
+  --glow2: rgba(34, 211, 238, .10);
+  --panel-bg: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .028));
+  --card-bg: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .025));
+  --base-bg: linear-gradient(180deg, #1a2038, #101423);
+  --dd-bg: #101627;
+  --item-hi: linear-gradient(90deg, rgba(99, 102, 241, .28), rgba(34, 211, 238, .12));
+  --tint: rgba(99, 102, 241, .14);
+  --scroll: rgba(255, 255, 255, .18);
+  --scroll-thumb: rgba(255, 255, 255, .15);
+  --shadow-panel: rgba(0, 0, 0, .30);
+  --shadow-card: rgba(0, 0, 0, .28);
+  --shadow-card-hover: rgba(0, 0, 0, .38);
+  --shadow-dd: rgba(0, 0, 0, .55);
+  --badge-fg: #7dd3fc;
+  --badge-bg: rgba(34, 211, 238, .12);
+  --badge-line: rgba(34, 211, 238, .25);
+  --banner-fg: #fda4af;
+  --banner-bg: rgba(244, 63, 94, .12);
+  --banner-line: rgba(244, 63, 94, .35);
+  /* DST indicator (amber — distinct from the cyan info badge) */
+  --dst-fg: #fcd34d;
+  --dst-bg: rgba(245, 158, 11, .12);
+  --dst-line: rgba(245, 158, 11, .32);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef1f8;
+  --text: #101828;
+  --dim: #4d5871;
+  --dimmer: #67718a;
+  --line: rgba(15, 23, 42, .10);
+  --line-strong: rgba(15, 23, 42, .20);
+  --fill: rgba(15, 23, 42, .045);
+  --fill-focus: rgba(15, 23, 42, .06);
+  --fill-hover: rgba(15, 23, 42, .08);
+  --chip-bg: rgba(15, 23, 42, .05);
+  --glow1: rgba(99, 102, 241, .13);
+  --glow2: rgba(34, 211, 238, .10);
+  --panel-bg: linear-gradient(180deg, #ffffff, #fbfcff);
+  --card-bg: linear-gradient(180deg, #ffffff, #fafbfe);
+  --base-bg: linear-gradient(180deg, #ffffff, #f5f7fd);
+  --dd-bg: #ffffff;
+  --item-hi: linear-gradient(90deg, rgba(99, 102, 241, .14), rgba(34, 211, 238, .10));
+  --tint: rgba(99, 102, 241, .10);
+  --scroll: rgba(15, 23, 42, .28);
+  --scroll-thumb: rgba(15, 23, 42, .22);
+  --shadow-panel: rgba(15, 23, 42, .08);
+  --shadow-card: rgba(15, 23, 42, .06);
+  --shadow-card-hover: rgba(15, 23, 42, .12);
+  --shadow-dd: rgba(15, 23, 42, .18);
+  --badge-fg: #0e7490;
+  --badge-bg: rgba(34, 211, 238, .16);
+  --badge-line: rgba(14, 116, 144, .30);
+  --banner-fg: #be123c;
+  --banner-bg: rgba(244, 63, 94, .08);
+  --banner-line: rgba(244, 63, 94, .30);
+  --dst-fg: #92400e;
+  --dst-bg: rgba(245, 158, 11, .14);
+  --dst-line: rgba(180, 83, 9, .35);
+}
+
+* { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1100px 700px at 85% -10%, var(--glow1), transparent 60%),
+    radial-gradient(900px 650px at -15% 110%, var(--glow2), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgba(99, 102, 241, .45); }
+
+.hidden { display: none !important; }
+
+:focus-visible { outline: 2px solid rgba(99, 102, 241, .8); outline-offset: 2px; }
+input:focus-visible, .combo input:focus-visible, .seg button:focus-visible, .btn:focus-visible, .rm:focus-visible, .chipbtn:focus-visible, .linkbtn:focus-visible { outline: none; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 60px; }
+
+/* ============================================================
+   Header
+   ============================================================ */
+.top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+}
+/* the header sits flush with the panel below (was an inline style in the markup);
+   higher specificity than .wrap so the mobile media query can't change it */
+header.top { padding-top: 28px; padding-bottom: 0; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 36px; height: 36px; border-radius: 11px;
+  background: var(--grad);
+  display: grid; place-items: center;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, .4);
+  flex: none;
+}
+.logo svg { width: 20px; height: 20px; display: block; }
+.brand h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.3px; }
+
+.seg {
+  display: flex; gap: 3px;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px;
+}
+.controls { display: flex; align-items: center; gap: 10px; }
+.theme-btn {
+  appearance: none; cursor: pointer;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--dim);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.theme-btn:hover { background: var(--fill-hover); border-color: var(--line-strong); color: var(--text); }
+.theme-btn svg { width: 17px; height: 17px; }
+#helpBtn { text-decoration: none; } /* it's a link (to help.html), not a button */
+/* the button shows the icon of the theme you would switch TO */
+.i-sun { display: block; }
+.i-moon { display: none; }
+[data-theme="light"] .i-sun { display: none; }
+[data-theme="light"] .i-moon { display: block; }
+.seg button {
+  appearance: none; border: 0; background: transparent;
+  color: var(--dim); font: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 5px 13px; border-radius: 999px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--grad); color: #fff; }
+.seg button.on:hover { color: #fff; }
+
+/* ============================================================
+   Base panel
+   ============================================================ */
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: 0 18px 50px var(--shadow-panel);
+}
+.panel-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.field { min-width: 0; }
+.field.grow { flex: 2 1 260px; }
+.field.date { flex: 1 1 158px; position: relative; }
+.field.time { flex: 1 1 150px; }
+.btnfield { padding-bottom: 0; }
+.flabel {
+  display: block; font-size: 11px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 7px;
+}
+
+#dateIn, #timeIn, .combo input {
+  width: 100%;
+  background: var(--fill);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  color: var(--text);
+  font: inherit; font-size: 14px;
+  padding: 9px 13px;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+#dateIn:focus, #timeIn:focus, .combo input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, .65);
+  background: var(--fill-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, .16);
+}
+/* The date picker: an invisible native date twin + calendar icon. The visible
+   field stays plain text in fixed YYYY-MM-DD; the calendar opens via
+   showPicker() on the twin, whose value is always canonical YYYY-MM-DD. */
+#dateIn { padding-right: 38px; }
+#datePick {
+  position: absolute; inset: 0;
+  opacity: 0; pointer-events: none;
+  border: 0; background: transparent;
+}
+.calico {
+  position: absolute; right: 9px; bottom: 8px;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  background: transparent; border: 0; border-radius: var(--r-md);
+  color: var(--dim); cursor: pointer;
+  transition: color .15s, background .15s;
+}
+.calico:hover { color: var(--text); background: var(--fill); }
+.calico:focus-visible { outline: 2px solid rgba(99, 102, 241, .65); outline-offset: 1px; }
+::placeholder { color: var(--dimmer); }
+input.err {
+  border-color: rgba(244, 63, 94, .7) !important;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, .18) !important;
+}
+
+/* ============================================================
+   Combobox
+   ============================================================ */
+.combo { position: relative; }
+.dd {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40;
+  background: var(--dd-bg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  box-shadow: 0 24px 60px var(--shadow-dd);
+  max-height: 300px; overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll) transparent;
+}
+.dd::-webkit-scrollbar { width: 8px; }
+.dd::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
+.item {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 9px 13px; font-size: 13.5px; cursor: pointer; white-space: nowrap;
+}
+.item .ic { color: var(--dim); }
+.item .ih { color: var(--dimmer); font-size: 12px; }
+.item.sel, .item:not(.none):hover { background: var(--item-hi); }
+.item.none { color: var(--dim); cursor: default; font-size: 13px; }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.btn {
+  font: inherit; font-size: 14px; font-weight: 600;
+  border-radius: var(--r-md); padding: 10px 18px;
+  cursor: pointer; border: 1px solid transparent;
+  transition: transform .12s, box-shadow .15s, background .15s, border-color .15s;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--grad); color: #fff; box-shadow: 0 8px 24px rgba(99, 102, 241, .35); }
+.btn.primary:hover { box-shadow: 0 10px 30px rgba(99, 102, 241, .5); transform: translateY(-1px); }
+.btn.ghost { background: var(--fill); border-color: var(--line); color: var(--text); }
+.btn.ghost:hover { background: var(--fill-hover); border-color: var(--line-strong); }
+
+/* ============================================================
+   Add row
+   ============================================================ */
+.add-row { display: flex; gap: 12px; align-items: flex-end; margin-top: 26px; }
+.add-row .field.grow { flex: 1 1 320px; }
+
+/* ============================================================
+   Cards
+   ============================================================ */
+.grid {
+  display: grid; gap: 14px; margin-top: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+}
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 16px;
+  box-shadow: 0 14px 40px var(--shadow-card);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  animation: rise .35s cubic-bezier(.2, .7, .3, 1) both;
+}
+.card:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 20px 50px var(--shadow-card-hover); }
+@keyframes rise { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+
+.card.base {
+  margin-top: 16px;
+  border: 1px solid transparent;
+  /* opaque padding-box so the gradient shows only in the 1px ring */
+  background:
+    var(--base-bg) padding-box,
+    var(--grad) border-box;
+  box-shadow: 0 18px 50px rgba(88, 101, 242, .22);
+}
+.card.base:hover { transform: none; }
+
+/* base card: live clock + selected time side by side */
+.card.base .base-cols { display: flex; gap: 48px; flex-wrap: wrap; margin-top: 14px; }
+.card.base .live { margin-top: 0; }
+.card.base .conv { margin-top: 0; }
+@media (max-width: 640px) {
+  .card.base .base-cols { gap: 20px; }
+}
+
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.loc { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.city { font-size: 15px; font-weight: 650; letter-spacing: -.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.coun { font-size: 12.5px; color: var(--dim); white-space: nowrap; }
+
+.rm {
+  appearance: none; border: 0; background: transparent;
+  color: var(--dimmer); width: 26px; height: 26px; border-radius: 50%;
+  font-size: 15px; line-height: 1; cursor: pointer; flex: none;
+  opacity: 0; transition: opacity .15s, background .15s, color .15s;
+}
+.card:hover .rm, .rm:focus-visible { opacity: 1; }
+.rm:hover { background: var(--fill-hover); color: var(--text); }
+.top-actions { display: flex; align-items: center; gap: 4px; }
+.grip {
+  color: var(--dimmer); opacity: .4; font-size: 13px; line-height: 1;
+  letter-spacing: -1px; user-select: none; cursor: grab; padding: 2px;
+}
+.card:hover .grip { opacity: .9; }
+/* non-base cards reorder by drag: the card itself stays in the grid, so
+   the layout can never overlap or float — the other cards reflow around it */
+.card:not(.base) { cursor: grab; user-select: none; }
+.card:not(.base):active { cursor: grabbing; }
+.card.dragging { opacity: .35; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.chip {
+  font-size: 11.5px; color: var(--dim);
+  background: var(--chip-bg);
+  border: 1px solid var(--line);
+  padding: 3px 10px; border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+.chip.badge {
+  background: var(--grad); border-color: transparent;
+  color: #fff; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; font-size: 10.5px; padding: 4px 11px;
+}
+
+.live { margin-top: 14px; }
+.clock {
+  font-size: clamp(30px, 3.4vw, 40px); font-weight: 650;
+  letter-spacing: -.8px; font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.cdate {
+  margin-top: 3px; font-size: 13px; color: var(--dim);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.sep { height: 1px; background: var(--line); margin: 14px 0 12px; }
+.conv-label {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dimmer); margin-bottom: 5px;
+}
+.conv { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.conv-time { font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.conv-date { font-size: 12.5px; color: var(--dim); }
+.daybadge {
+  font-size: 11px; font-weight: 600;
+  color: var(--badge-fg); background: var(--badge-bg);
+  border: 1px solid var(--badge-line);
+  padding: 2px 9px; border-radius: 999px;
+}
+.dstbadge {
+  font-size: 11px; font-weight: 600;
+  color: var(--dst-fg); background: var(--dst-bg);
+  border: 1px solid var(--dst-line);
+  padding: 2px 9px; border-radius: 999px;
+}
+
+/* ============================================================
+   Empty state
+   ============================================================ */
+.empty {
+  margin-top: 14px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: 44px 24px; text-align: center;
+}
+.empty-icon { font-size: 30px; }
+.empty h3 { margin: 10px 0 6px; font-size: 16px; }
+.empty p { margin: 0 auto; max-width: 460px; font-size: 13.5px; color: var(--dim); line-height: 1.55; }
+.quick { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 18px; }
+.chipbtn {
+  appearance: none; font: inherit; font-size: 13px; font-weight: 600;
+  color: var(--text); background: var(--fill);
+  border: 1px solid var(--line);
+  padding: 7px 14px; border-radius: 999px; cursor: pointer;
+  transition: transform .12s, background .15s, border-color .15s;
+}
+.chipbtn:hover { border-color: rgba(99, 102, 241, .6); background: var(--tint); transform: translateY(-1px); }
+
+/* ============================================================
+   Footer / banner
+   ============================================================ */
+.foot {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 44px; padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--dimmer);
+}
+.foot-actions { display: flex; align-items: center; gap: 14px; }
+.linkbtn {
+  appearance: none; background: none; border: 0;
+  color: var(--dim); font: inherit; font-size: 12.5px;
+  text-decoration: underline; cursor: pointer;
+}
+.linkbtn:hover { color: var(--text); }
+
+.banner {
+  background: var(--banner-bg);
+  border: 1px solid var(--banner-line);
+  color: var(--banner-fg);
+  padding: 12px 18px; border-radius: var(--r-md);
+  margin: 0 0 20px; font-size: 13.5px;
+}
+/* success variant (import feedback) — the cyan info tint, not the error rose */
+.banner.ok {
+  background: var(--badge-bg);
+  border-color: var(--badge-line);
+  color: var(--badge-fg);
+}
+
+/* ============================================================
+   Responsive & motion
+   ============================================================ */
+@media (max-width: 640px) {
+  .wrap { padding: 20px 14px 48px; }
+  .grid { grid-template-columns: 1fr; }
+  .panel-row .field.grow { flex: 1 1 100%; }
+  .panel-row .field.date, .panel-row .field.time { flex: 1 1 55%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+  .card:hover, .btn:hover, .chipbtn:hover { transform: none; }
+}
+</style>
+<script>
+/* Pre-paint theme (no-flash guard): runs in <head> before any body content
+   can render, so the first frame is already in the final theme. Mirrors the
+   app's own resolution exactly (loadState() + resolvedTheme(), below): the
+   saved choice if it is an explicit dark/light, otherwise the OS/browser
+   preference, otherwise dark. It only ever sets data-theme="light" — dark is
+   the static :root default, so a dark user (or an unknowable preference)
+   needs no work, and a light-resolving user never sees a dark frame.
+   Keep in sync with the two functions it mirrors. */
+(function () {
+  try {
+    var t = 'auto';
+    try {
+      var s = JSON.parse(localStorage.getItem('timezones.app.v1'));
+      if (s && (s.theme === 'dark' || s.theme === 'light')) t = s.theme;
+    } catch (e) { /* absent/unreadable save -> auto, as loadState() does */ }
+    var darkPref = null; // null = preference unknowable (matchMedia unavailable)
+    try { darkPref = matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+    if (t === 'light' || (t === 'auto' && darkPref === false))
+      document.documentElement.dataset.theme = 'light';
+  } catch (e) { /* keep the dark default */ }
+})();
+</script>
+</head>
+<body>
+
+<header class="top wrap">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="19" fill="none" stroke="white" stroke-width="4"/>
+        <path d="M32 21v11l7.5 5.5" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <h1>Timezones</h1>
+  </div>
+  <div class="controls">
+    <a class="theme-btn" id="helpBtn" href="help.html" aria-label="Help" title="Help">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <circle cx="12" cy="17" r="1.2" fill="currentColor" stroke="none"/>
+      </svg>
+    </a>
+    <button class="theme-btn" id="themeBtn" type="button" aria-pressed="false"
+            aria-label="Switch to light mode" title="Switch to light mode">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/>
+      </svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>
+      </svg>
+    </button>
+    <div class="seg" id="fmtSeg" role="group" aria-label="Time format">
+      <button type="button" data-fmt="12" aria-pressed="false">12h</button>
+      <button type="button" data-fmt="24" class="on" aria-pressed="true">24h</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <noscript>
+    <div class="banner">This app needs JavaScript. Please enable JavaScript in your browser and reload the page.</div>
+  </noscript>
+  <div class="banner hidden" id="importMsg" role="status"></div>
+
+  <!-- Base timezone -->
+  <section class="panel" aria-label="Base timezone">
+    <div class="panel-row">
+      <div class="field grow">
+        <label class="flabel" for="baseIn">Base timezone</label>
+        <div class="combo" id="baseCombo">
+          <input id="baseIn" autocomplete="off" spellcheck="false" placeholder="City, IANA zone or UTC offset">
+          <div class="dd hidden"></div>
+        </div>
+      </div>
+      <div class="field date">
+        <label class="flabel" for="dateIn">Date (YYYY-MM-DD)</label>
+        <input type="text" id="dateIn" autocomplete="off" spellcheck="false" placeholder="2026-10-03">
+        <input type="date" id="datePick" tabindex="-1" aria-hidden="true">
+        <button type="button" id="calBtn" class="calico" title="Pick a date" aria-label="Open date picker" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        </button>
+      </div>
+      <div class="field time">
+        <label class="flabel" for="timeIn">Time</label>
+        <input type="text" id="timeIn" autocomplete="off" spellcheck="false" placeholder="14:30">
+      </div>
+      <div class="field btnfield">
+        <button class="btn ghost" id="nowBtn" type="button">Now</button>
+      </div>
+    </div>
+    <div id="baseCardSlot"></div>
+  </section>
+
+  <!-- Other timezones -->
+  <section aria-label="Other timezones">
+    <div class="add-row">
+      <div class="field grow">
+        <div class="combo" id="addCombo">
+          <input id="addIn" autocomplete="off" spellcheck="false" placeholder="Add a city, IANA zone or UTC offset…">
+          <div class="dd hidden"></div>
+        </div>
+      </div>
+      <button class="btn primary" id="addBtn" type="button">Add</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty hidden" id="empty">
+      <div class="empty-icon" aria-hidden="true">🌍</div>
+      <h3>No other timezones yet</h3>
+      <p>Search above for a city or UTC offset — or start with one of these:</p>
+      <div class="quick" id="quick"></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="foot-actions">
+      <button class="linkbtn" id="exportBtn" type="button">Export</button>
+      <button class="linkbtn" id="importBtn" type="button">Import</button>
+      <button class="linkbtn" id="resetBtn" type="button">Reset</button>
+    </div>
+    <input type="file" id="importFile" accept=".json,application/json" class="hidden" tabindex="-1" aria-hidden="true">
+  </footer>
+
+</main>
+
+<script>
+'use strict';
+
+/* ============================================================
+   Data: curated city → IANA timezone dataset
+   ============================================================ */
+const CITIES = [
+  // Europe
+  ["London","United Kingdom","Europe/London"],
+  ["Paris","France","Europe/Paris"],
+  ["Berlin","Germany","Europe/Berlin"],
+  ["Madrid","Spain","Europe/Madrid"],
+  ["Barcelona","Spain","Europe/Madrid"],
+  ["Rome","Italy","Europe/Rome"],
+  ["Milan","Italy","Europe/Rome"],
+  ["Amsterdam","Netherlands","Europe/Amsterdam"],
+  ["Brussels","Belgium","Europe/Brussels"],
+  ["Lisbon","Portugal","Europe/Lisbon"],
+  ["Dublin","Ireland","Europe/Dublin"],
+  ["Vienna","Austria","Europe/Vienna"],
+  ["Zurich","Switzerland","Europe/Zurich"],
+  ["Geneva","Switzerland","Europe/Zurich"],
+  ["Copenhagen","Denmark","Europe/Copenhagen"],
+  ["Stockholm","Sweden","Europe/Stockholm"],
+  ["Oslo","Norway","Europe/Oslo"],
+  ["Helsinki","Finland","Europe/Helsinki"],
+  ["Warsaw","Poland","Europe/Warsaw"],
+  ["Prague","Czechia","Europe/Prague"],
+  ["Budapest","Hungary","Europe/Budapest"],
+  ["Athens","Greece","Europe/Athens"],
+  ["Bucharest","Romania","Europe/Bucharest"],
+  ["Sofia","Bulgaria","Europe/Sofia"],
+  ["Belgrade","Serbia","Europe/Belgrade"],
+  ["Zagreb","Croatia","Europe/Zagreb"],
+  ["Ljubljana","Slovenia","Europe/Ljubljana"],
+  ["Bratislava","Slovakia","Europe/Bratislava"],
+  ["Tallinn","Estonia","Europe/Tallinn"],
+  ["Riga","Latvia","Europe/Riga"],
+  ["Vilnius","Lithuania","Europe/Vilnius"],
+  ["Minsk","Belarus","Europe/Minsk"],
+  ["Kyiv","Ukraine","Europe/Kyiv"],
+  ["Valletta","Malta","Europe/Valletta"],
+  ["Andorra la Vella","Andorra","Europe/Andorra"],
+  ["Monaco","Monaco","Europe/Monaco"],
+  ["Luxembourg","Luxembourg","Europe/Luxembourg"],
+  ["Nicosia","Cyprus","Europe/Nicosia"],
+  ["Moscow","Russia","Europe/Moscow"],
+  ["Samara","Russia","Europe/Samara"],
+  ["Istanbul","Türkiye","Europe/Istanbul"],
+  ["Ankara","Türkiye","Europe/Istanbul"],
+  ["Reykjavik","Iceland","Atlantic/Reykjavik"],
+  ["Ponta Delgada","Portugal","Atlantic/Azores"],
+  ["Mindelo","Cape Verde","Atlantic/Cape_Verde"],
+  // Africa
+  ["Cairo","Egypt","Africa/Cairo"],
+  ["Johannesburg","South Africa","Africa/Johannesburg"],
+  ["Pretoria","South Africa","Africa/Johannesburg"],
+  ["Cape Town","South Africa","Africa/Johannesburg"],
+  ["Lagos","Nigeria","Africa/Lagos"],
+  ["Nairobi","Kenya","Africa/Nairobi"],
+  ["Addis Ababa","Ethiopia","Africa/Addis_Ababa"],
+  ["Casablanca","Morocco","Africa/Casablanca"],
+  ["Rabat","Morocco","Africa/Casablanca"],
+  ["Algiers","Algeria","Africa/Algiers"],
+  ["Tunis","Tunisia","Africa/Tunis"],
+  ["Tripoli","Libya","Africa/Tripoli"],
+  ["Dakar","Senegal","Africa/Dakar"],
+  ["Abidjan","Côte d'Ivoire","Africa/Abidjan"],
+  ["Accra","Ghana","Africa/Accra"],
+  ["Kinshasa","DR Congo","Africa/Kinshasa"],
+  ["Kigali","Rwanda","Africa/Kigali"],
+  ["Dar es Salaam","Tanzania","Africa/Dar_es_Salaam"],
+  ["Luanda","Angola","Africa/Luanda"],
+  ["Windhoek","Namibia","Africa/Windhoek"],
+  ["Harare","Zimbabwe","Africa/Harare"],
+  ["Khartoum","Sudan","Africa/Khartoum"],
+  ["Kampala","Uganda","Africa/Kampala"],
+  ["Asmara","Eritrea","Africa/Asmera"],
+  ["Djibouti","Djibouti","Africa/Djibouti"],
+  // Asia
+  ["Dubai","United Arab Emirates","Asia/Dubai"],
+  ["Doha","Qatar","Asia/Qatar"],
+  ["Riyadh","Saudi Arabia","Asia/Riyadh"],
+  ["Jeddah","Saudi Arabia","Asia/Riyadh"],
+  ["Tel Aviv","Israel","Asia/Jerusalem"],
+  ["Jerusalem","Israel","Asia/Jerusalem"],
+  ["Beirut","Lebanon","Asia/Beirut"],
+  ["Damascus","Syria","Asia/Damascus"],
+  ["Amman","Jordan","Asia/Amman"],
+  ["Baghdad","Iraq","Asia/Baghdad"],
+  ["Baku","Azerbaijan","Asia/Baku"],
+  ["Tbilisi","Georgia","Asia/Tbilisi"],
+  ["Yerevan","Armenia","Asia/Yerevan"],
+  ["New Delhi","India","Asia/Kolkata"],
+  ["Mumbai","India","Asia/Kolkata"],
+  ["Kolkata","India","Asia/Kolkata"],
+  ["Chennai","India","Asia/Kolkata"],
+  ["Bengaluru","India","Asia/Kolkata"],
+  ["Hyderabad","India","Asia/Kolkata"],
+  ["Karachi","Pakistan","Asia/Karachi"],
+  ["Islamabad","Pakistan","Asia/Karachi"],
+  ["Dhaka","Bangladesh","Asia/Dhaka"],
+  ["Colombo","Sri Lanka","Asia/Colombo"],
+  ["Kathmandu","Nepal","Asia/Kathmandu"],
+  ["Tehran","Iran","Asia/Tehran"],
+  ["Kabul","Afghanistan","Asia/Kabul"],
+  ["Tashkent","Uzbekistan","Asia/Tashkent"],
+  ["Almaty","Kazakhstan","Asia/Almaty"],
+  ["Astana","Kazakhstan","Asia/Almaty"],
+  ["Qaraghandy","Kazakhstan","Asia/Qaraghandy"],
+  ["Yekaterinburg","Russia","Europe/Yekaterinburg"],
+  ["Omsk","Russia","Asia/Omsk"],
+  ["Novosibirsk","Russia","Asia/Novosibirsk"],
+  ["Krasnoyarsk","Russia","Asia/Krasnoyarsk"],
+  ["Irkutsk","Russia","Asia/Irkutsk"],
+  ["Yakutsk","Russia","Asia/Yakutsk"],
+  ["Vladivostok","Russia","Asia/Vladivostok"],
+  ["Magadan","Russia","Asia/Magadan"],
+  ["Petropavlovsk-Kamchatsky","Russia","Asia/Kamchatka"],
+  ["Bangkok","Thailand","Asia/Bangkok"],
+  ["Ho Chi Minh City","Vietnam","Asia/Ho_Chi_Minh"],
+  ["Kuala Lumpur","Malaysia","Asia/Kuala_Lumpur"],
+  ["Singapore","Singapore","Asia/Singapore"],
+  ["Jakarta","Indonesia","Asia/Jakarta"],
+  ["Surabaya","Indonesia","Asia/Makassar"],
+  ["Bali","Indonesia","Asia/Makassar"],
+  ["Jayapura","Indonesia","Asia/Jayapura"],
+  ["Dili","Timor-Leste","Asia/Dili"],
+  ["Manila","Philippines","Asia/Manila"],
+  ["Taipei","Taiwan","Asia/Taipei"],
+  ["Hong Kong","China","Asia/Hong_Kong"],
+  ["Tokyo","Japan","Asia/Tokyo"],
+  ["Osaka","Japan","Asia/Tokyo"],
+  ["Seoul","South Korea","Asia/Seoul"],
+  ["Busan","South Korea","Asia/Seoul"],
+  ["Ulaanbaatar","Mongolia","Asia/Ulaanbaatar"],
+  ["Guam","United States","Pacific/Guam"],
+  // Americas
+  ["New York","United States","America/New_York"],
+  ["Boston","United States","America/New_York"],
+  ["Philadelphia","United States","America/New_York"],
+  ["Miami","United States","America/New_York"],
+  ["Atlanta","United States","America/New_York"],
+  ["Chicago","United States","America/Chicago"],
+  ["Dallas","United States","America/Chicago"],
+  ["Houston","United States","America/Chicago"],
+  ["Denver","United States","America/Denver"],
+  ["Phoenix","United States","America/Phoenix"],
+  ["Los Angeles","United States","America/Los_Angeles"],
+  ["San Francisco","United States","America/Los_Angeles"],
+  ["Seattle","United States","America/Los_Angeles"],
+  ["Anchorage","United States","America/Anchorage"],
+  ["Mexico City","Mexico","America/Mexico_City"],
+  ["Guadalajara","Mexico","America/Mexico_City"],
+  ["Cancún","Mexico","America/Cancun"],
+  ["Guatemala City","Guatemala","America/Guatemala"],
+  ["Panama City","Panama","America/Panama"],
+  ["Bogotá","Colombia","America/Bogota"],
+  ["Quito","Ecuador","America/Guayaquil"],
+  ["Lima","Peru","America/Lima"],
+  ["Caracas","Venezuela","America/Caracas"],
+  ["Georgetown","Guyana","America/Guyana"],
+  ["São Paulo","Brazil","America/Sao_Paulo"],
+  ["Rio de Janeiro","Brazil","America/Sao_Paulo"],
+  ["Brasília","Brazil","America/Sao_Paulo"],
+  ["Fortaleza","Brazil","America/Fortaleza"],
+  ["Manaus","Brazil","America/Manaus"],
+  ["Córdoba","Argentina","America/Argentina/Cordoba"],
+  ["Buenos Aires","Argentina","America/Argentina/Buenos_Aires"],
+  ["Santiago","Chile","America/Santiago"],
+  ["Montevideo","Uruguay","America/Montevideo"],
+  ["Asunción","Paraguay","America/Asuncion"],
+  ["La Paz","Bolivia","America/La_Paz"],
+  ["Havana","Cuba","America/Havana"],
+  ["Kingston","Jamaica","America/Jamaica"],
+  ["Nassau","Bahamas","America/Nassau"],
+  ["Toronto","Canada","America/Toronto"],
+  ["Montreal","Canada","America/Toronto"],
+  ["Ottawa","Canada","America/Toronto"],
+  ["Vancouver","Canada","America/Vancouver"],
+  ["Calgary","Canada","America/Edmonton"],
+  ["Winnipeg","Canada","America/Winnipeg"],
+  ["Halifax","Canada","America/Halifax"],
+  ["St. John's","Canada","America/St_Johns"],
+  // Oceania & Pacific
+  ["Sydney","Australia","Australia/Sydney"],
+  ["Melbourne","Australia","Australia/Melbourne"],
+  ["Brisbane","Australia","Australia/Brisbane"],
+  ["Perth","Australia","Australia/Perth"],
+  ["Adelaide","Australia","Australia/Adelaide"],
+  ["Darwin","Australia","Australia/Darwin"],
+  ["Hobart","Australia","Australia/Hobart"],
+  ["Canberra","Australia","Australia/Sydney"],
+  ["Auckland","New Zealand","Pacific/Auckland"],
+  ["Wellington","New Zealand","Pacific/Auckland"],
+  ["Christchurch","New Zealand","Pacific/Auckland"],
+  ["Waitangi","New Zealand","Pacific/Chatham"],
+  ["Suva","Fiji","Pacific/Fiji"],
+  ["Nouméa","New Caledonia","Pacific/Noumea"],
+  ["Port Moresby","Papua New Guinea","Pacific/Port_Moresby"],
+  ["Apia","Samoa","Pacific/Apia"],
+  ["Nuku'alofa","Tonga","Pacific/Nuku'alofa"],
+  ["Funafuti","Tuvalu","Pacific/Funafuti"],
+  ["Majuro","Marshall Islands","Pacific/Majuro"],
+  ["Tarawa","Kiribati","Pacific/Enderbury"],
+  ["Kiritimati","Kiribati","Pacific/Kiritimati"],
+  ["Honolulu","United States","Pacific/Honolulu"],
+  ["Pago Pago","American Samoa","Pacific/Pago_Pago"],
+  ["Nuku Hiva","French Polynesia","Pacific/Marquesas"]
+];
+
+/* ============================================================
+   IANA tzdata name tables (public domain)
+   Source: eggert/tz mirror of tzdata, release 2026e, fetched 2026-10-03.
+   Every current canonical zone name, every backward-compat link
+   (name -> target), zone -> country codes, and ISO 3166 names.
+   Makes all IANA zone names searchable; entries are validated
+   at load time against the browser's own tzdata (zoneExists),
+   and all time math uses the browser's live tzdata via Intl.
+   ============================================================ */
+const TZDB_CANON = [
+  "Africa/Abidjan",
+  "Africa/Algiers",
+  "Africa/Bissau",
+  "Africa/Cairo",
+  "Africa/Casablanca",
+  "Africa/Ceuta",
+  "Africa/El_Aaiun",
+  "Africa/Johannesburg",
+  "Africa/Juba",
+  "Africa/Khartoum",
+  "Africa/Lagos",
+  "Africa/Maputo",
+  "Africa/Monrovia",
+  "Africa/Nairobi",
+  "Africa/Ndjamena",
+  "Africa/Sao_Tome",
+  "Africa/Tripoli",
+  "Africa/Tunis",
+  "Africa/Windhoek",
+  "America/Adak",
+  "America/Anchorage",
+  "America/Araguaina",
+  "America/Argentina/Buenos_Aires",
+  "America/Argentina/Catamarca",
+  "America/Argentina/Cordoba",
+  "America/Argentina/Jujuy",
+  "America/Argentina/La_Rioja",
+  "America/Argentina/Mendoza",
+  "America/Argentina/Rio_Gallegos",
+  "America/Argentina/Salta",
+  "America/Argentina/San_Juan",
+  "America/Argentina/San_Luis",
+  "America/Argentina/Tucuman",
+  "America/Argentina/Ushuaia",
+  "America/Asuncion",
+  "America/Bahia",
+  "America/Bahia_Banderas",
+  "America/Barbados",
+  "America/Belem",
+  "America/Belize",
+  "America/Boa_Vista",
+  "America/Bogota",
+  "America/Boise",
+  "America/Cambridge_Bay",
+  "America/Campo_Grande",
+  "America/Cancun",
+  "America/Caracas",
+  "America/Cayenne",
+  "America/Chicago",
+  "America/Chihuahua",
+  "America/Ciudad_Juarez",
+  "America/Costa_Rica",
+  "America/Coyhaique",
+  "America/Cuiaba",
+  "America/Danmarkshavn",
+  "America/Dawson",
+  "America/Dawson_Creek",
+  "America/Denver",
+  "America/Detroit",
+  "America/Edmonton",
+  "America/Eirunepe",
+  "America/El_Salvador",
+  "America/Fort_Nelson",
+  "America/Fortaleza",
+  "America/Glace_Bay",
+  "America/Goose_Bay",
+  "America/Grand_Turk",
+  "America/Guatemala",
+  "America/Guayaquil",
+  "America/Guyana",
+  "America/Halifax",
+  "America/Havana",
+  "America/Hermosillo",
+  "America/Indiana/Indianapolis",
+  "America/Indiana/Knox",
+  "America/Indiana/Marengo",
+  "America/Indiana/Petersburg",
+  "America/Indiana/Tell_City",
+  "America/Indiana/Vevay",
+  "America/Indiana/Vincennes",
+  "America/Indiana/Winamac",
+  "America/Inuvik",
+  "America/Iqaluit",
+  "America/Jamaica",
+  "America/Juneau",
+  "America/Kentucky/Louisville",
+  "America/Kentucky/Monticello",
+  "America/La_Paz",
+  "America/Lima",
+  "America/Los_Angeles",
+  "America/Maceio",
+  "America/Managua",
+  "America/Manaus",
+  "America/Martinique",
+  "America/Matamoros",
+  "America/Mazatlan",
+  "America/Menominee",
+  "America/Merida",
+  "America/Metlakatla",
+  "America/Mexico_City",
+  "America/Miquelon",
+  "America/Moncton",
+  "America/Monterrey",
+  "America/Montevideo",
+  "America/New_York",
+  "America/Nome",
+  "America/Noronha",
+  "America/North_Dakota/Beulah",
+  "America/North_Dakota/Center",
+  "America/North_Dakota/New_Salem",
+  "America/Nuuk",
+  "America/Ojinaga",
+  "America/Panama",
+  "America/Paramaribo",
+  "America/Phoenix",
+  "America/Port-au-Prince",
+  "America/Porto_Velho",
+  "America/Puerto_Rico",
+  "America/Punta_Arenas",
+  "America/Rankin_Inlet",
+  "America/Recife",
+  "America/Regina",
+  "America/Resolute",
+  "America/Rio_Branco",
+  "America/Santarem",
+  "America/Santiago",
+  "America/Santo_Domingo",
+  "America/Sao_Paulo",
+  "America/Scoresbysund",
+  "America/Sitka",
+  "America/St_Johns",
+  "America/Swift_Current",
+  "America/Tegucigalpa",
+  "America/Thule",
+  "America/Tijuana",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Whitehorse",
+  "America/Winnipeg",
+  "America/Yakutat",
+  "Antarctica/Casey",
+  "Antarctica/Davis",
+  "Antarctica/Macquarie",
+  "Antarctica/Mawson",
+  "Antarctica/Palmer",
+  "Antarctica/Rothera",
+  "Antarctica/Troll",
+  "Antarctica/Vostok",
+  "Asia/Almaty",
+  "Asia/Amman",
+  "Asia/Anadyr",
+  "Asia/Aqtau",
+  "Asia/Aqtobe",
+  "Asia/Ashgabat",
+  "Asia/Atyrau",
+  "Asia/Baghdad",
+  "Asia/Baku",
+  "Asia/Bangkok",
+  "Asia/Barnaul",
+  "Asia/Beirut",
+  "Asia/Bishkek",
+  "Asia/Chita",
+  "Asia/Colombo",
+  "Asia/Damascus",
+  "Asia/Dhaka",
+  "Asia/Dili",
+  "Asia/Dubai",
+  "Asia/Dushanbe",
+  "Asia/Famagusta",
+  "Asia/Gaza",
+  "Asia/Hebron",
+  "Asia/Ho_Chi_Minh",
+  "Asia/Hong_Kong",
+  "Asia/Hovd",
+  "Asia/Irkutsk",
+  "Asia/Jakarta",
+  "Asia/Jayapura",
+  "Asia/Jerusalem",
+  "Asia/Kabul",
+  "Asia/Kamchatka",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Khandyga",
+  "Asia/Kolkata",
+  "Asia/Krasnoyarsk",
+  "Asia/Kuching",
+  "Asia/Macau",
+  "Asia/Magadan",
+  "Asia/Makassar",
+  "Asia/Manila",
+  "Asia/Nicosia",
+  "Asia/Novokuznetsk",
+  "Asia/Novosibirsk",
+  "Asia/Omsk",
+  "Asia/Oral",
+  "Asia/Pontianak",
+  "Asia/Pyongyang",
+  "Asia/Qatar",
+  "Asia/Qostanay",
+  "Asia/Qyzylorda",
+  "Asia/Riyadh",
+  "Asia/Sakhalin",
+  "Asia/Samarkand",
+  "Asia/Seoul",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Srednekolymsk",
+  "Asia/Taipei",
+  "Asia/Tashkent",
+  "Asia/Tbilisi",
+  "Asia/Tehran",
+  "Asia/Thimphu",
+  "Asia/Tokyo",
+  "Asia/Tomsk",
+  "Asia/Ulaanbaatar",
+  "Asia/Urumqi",
+  "Asia/Ust-Nera",
+  "Asia/Vladivostok",
+  "Asia/Yakutsk",
+  "Asia/Yangon",
+  "Asia/Yekaterinburg",
+  "Asia/Yerevan",
+  "Atlantic/Azores",
+  "Atlantic/Bermuda",
+  "Atlantic/Canary",
+  "Atlantic/Cape_Verde",
+  "Atlantic/Faroe",
+  "Atlantic/Madeira",
+  "Atlantic/South_Georgia",
+  "Atlantic/Stanley",
+  "Australia/Adelaide",
+  "Australia/Brisbane",
+  "Australia/Broken_Hill",
+  "Australia/Darwin",
+  "Australia/Eucla",
+  "Australia/Hobart",
+  "Australia/Lindeman",
+  "Australia/Lord_Howe",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Australia/Sydney",
+  "CST6CDT",
+  "EST5EDT",
+  "Etc/GMT",
+  "Etc/GMT+1",
+  "Etc/GMT+10",
+  "Etc/GMT+11",
+  "Etc/GMT+12",
+  "Etc/GMT+2",
+  "Etc/GMT+3",
+  "Etc/GMT+4",
+  "Etc/GMT+5",
+  "Etc/GMT+6",
+  "Etc/GMT+7",
+  "Etc/GMT+8",
+  "Etc/GMT+9",
+  "Etc/GMT-1",
+  "Etc/GMT-10",
+  "Etc/GMT-11",
+  "Etc/GMT-12",
+  "Etc/GMT-13",
+  "Etc/GMT-14",
+  "Etc/GMT-2",
+  "Etc/GMT-3",
+  "Etc/GMT-4",
+  "Etc/GMT-5",
+  "Etc/GMT-6",
+  "Etc/GMT-7",
+  "Etc/GMT-8",
+  "Etc/GMT-9",
+  "Etc/UTC",
+  "Europe/Andorra",
+  "Europe/Astrakhan",
+  "Europe/Athens",
+  "Europe/Belgrade",
+  "Europe/Berlin",
+  "Europe/Brussels",
+  "Europe/Bucharest",
+  "Europe/Budapest",
+  "Europe/Chisinau",
+  "Europe/Dublin",
+  "Europe/Gibraltar",
+  "Europe/Helsinki",
+  "Europe/Istanbul",
+  "Europe/Kaliningrad",
+  "Europe/Kirov",
+  "Europe/Kyiv",
+  "Europe/Lisbon",
+  "Europe/London",
+  "Europe/Madrid",
+  "Europe/Malta",
+  "Europe/Minsk",
+  "Europe/Moscow",
+  "Europe/Paris",
+  "Europe/Prague",
+  "Europe/Riga",
+  "Europe/Rome",
+  "Europe/Samara",
+  "Europe/Saratov",
+  "Europe/Simferopol",
+  "Europe/Sofia",
+  "Europe/Tallinn",
+  "Europe/Tirane",
+  "Europe/Ulyanovsk",
+  "Europe/Vienna",
+  "Europe/Vilnius",
+  "Europe/Volgograd",
+  "Europe/Warsaw",
+  "Europe/Zurich",
+  "Indian/Chagos",
+  "Indian/Maldives",
+  "Indian/Mauritius",
+  "MST7MDT",
+  "PST8PDT",
+  "Pacific/Apia",
+  "Pacific/Auckland",
+  "Pacific/Bougainville",
+  "Pacific/Chatham",
+  "Pacific/Easter",
+  "Pacific/Efate",
+  "Pacific/Fakaofo",
+  "Pacific/Fiji",
+  "Pacific/Galapagos",
+  "Pacific/Gambier",
+  "Pacific/Guadalcanal",
+  "Pacific/Guam",
+  "Pacific/Honolulu",
+  "Pacific/Kanton",
+  "Pacific/Kiritimati",
+  "Pacific/Kosrae",
+  "Pacific/Kwajalein",
+  "Pacific/Marquesas",
+  "Pacific/Nauru",
+  "Pacific/Niue",
+  "Pacific/Norfolk",
+  "Pacific/Noumea",
+  "Pacific/Pago_Pago",
+  "Pacific/Palau",
+  "Pacific/Pitcairn",
+  "Pacific/Port_Moresby",
+  "Pacific/Rarotonga",
+  "Pacific/Tahiti",
+  "Pacific/Tarawa",
+  "Pacific/Tongatapu"
+];
+const TZDB_LINKS = [
+  ["Africa/Accra", "Africa/Abidjan"],
+  ["Africa/Addis_Ababa", "Africa/Nairobi"],
+  ["Africa/Asmara", "Africa/Nairobi"],
+  ["Africa/Asmera", "Africa/Nairobi"],
+  ["Africa/Bamako", "Africa/Abidjan"],
+  ["Africa/Bangui", "Africa/Lagos"],
+  ["Africa/Banjul", "Africa/Abidjan"],
+  ["Africa/Blantyre", "Africa/Maputo"],
+  ["Africa/Brazzaville", "Africa/Lagos"],
+  ["Africa/Bujumbura", "Africa/Maputo"],
+  ["Africa/Conakry", "Africa/Abidjan"],
+  ["Africa/Dakar", "Africa/Abidjan"],
+  ["Africa/Dar_es_Salaam", "Africa/Nairobi"],
+  ["Africa/Djibouti", "Africa/Nairobi"],
+  ["Africa/Douala", "Africa/Lagos"],
+  ["Africa/Freetown", "Africa/Abidjan"],
+  ["Africa/Gaborone", "Africa/Maputo"],
+  ["Africa/Harare", "Africa/Maputo"],
+  ["Africa/Kampala", "Africa/Nairobi"],
+  ["Africa/Kigali", "Africa/Maputo"],
+  ["Africa/Kinshasa", "Africa/Lagos"],
+  ["Africa/Libreville", "Africa/Lagos"],
+  ["Africa/Lome", "Africa/Abidjan"],
+  ["Africa/Luanda", "Africa/Lagos"],
+  ["Africa/Lubumbashi", "Africa/Maputo"],
+  ["Africa/Lusaka", "Africa/Maputo"],
+  ["Africa/Malabo", "Africa/Lagos"],
+  ["Africa/Maseru", "Africa/Johannesburg"],
+  ["Africa/Mbabane", "Africa/Johannesburg"],
+  ["Africa/Mogadishu", "Africa/Nairobi"],
+  ["Africa/Niamey", "Africa/Lagos"],
+  ["Africa/Nouakchott", "Africa/Abidjan"],
+  ["Africa/Ouagadougou", "Africa/Abidjan"],
+  ["Africa/Porto-Novo", "Africa/Lagos"],
+  ["Africa/Timbuktu", "Africa/Abidjan"],
+  ["America/Anguilla", "America/Puerto_Rico"],
+  ["America/Antigua", "America/Puerto_Rico"],
+  ["America/Argentina/ComodRivadavia", "America/Argentina/Catamarca"],
+  ["America/Aruba", "America/Puerto_Rico"],
+  ["America/Atikokan", "America/Panama"],
+  ["America/Atka", "America/Adak"],
+  ["America/Blanc-Sablon", "America/Puerto_Rico"],
+  ["America/Buenos_Aires", "America/Argentina/Buenos_Aires"],
+  ["America/Catamarca", "America/Argentina/Catamarca"],
+  ["America/Cayman", "America/Panama"],
+  ["America/Coral_Harbour", "America/Panama"],
+  ["America/Cordoba", "America/Argentina/Cordoba"],
+  ["America/Creston", "America/Phoenix"],
+  ["America/Curacao", "America/Puerto_Rico"],
+  ["America/Dominica", "America/Puerto_Rico"],
+  ["America/Ensenada", "America/Tijuana"],
+  ["America/Fort_Wayne", "America/Indiana/Indianapolis"],
+  ["America/Godthab", "America/Nuuk"],
+  ["America/Grenada", "America/Puerto_Rico"],
+  ["America/Guadeloupe", "America/Puerto_Rico"],
+  ["America/Indianapolis", "America/Indiana/Indianapolis"],
+  ["America/Jujuy", "America/Argentina/Jujuy"],
+  ["America/Knox_IN", "America/Indiana/Knox"],
+  ["America/Kralendijk", "America/Puerto_Rico"],
+  ["America/Louisville", "America/Kentucky/Louisville"],
+  ["America/Lower_Princes", "America/Puerto_Rico"],
+  ["America/Marigot", "America/Puerto_Rico"],
+  ["America/Mendoza", "America/Argentina/Mendoza"],
+  ["America/Montreal", "America/Toronto"],
+  ["America/Montserrat", "America/Puerto_Rico"],
+  ["America/Nassau", "America/Toronto"],
+  ["America/Nipigon", "America/Toronto"],
+  ["America/Pangnirtung", "America/Iqaluit"],
+  ["America/Port_of_Spain", "America/Puerto_Rico"],
+  ["America/Porto_Acre", "America/Rio_Branco"],
+  ["America/Rainy_River", "America/Winnipeg"],
+  ["America/Rosario", "America/Argentina/Cordoba"],
+  ["America/Santa_Isabel", "America/Tijuana"],
+  ["America/Shiprock", "America/Denver"],
+  ["America/St_Barthelemy", "America/Puerto_Rico"],
+  ["America/St_Kitts", "America/Puerto_Rico"],
+  ["America/St_Lucia", "America/Puerto_Rico"],
+  ["America/St_Thomas", "America/Puerto_Rico"],
+  ["America/St_Vincent", "America/Puerto_Rico"],
+  ["America/Thunder_Bay", "America/Toronto"],
+  ["America/Tortola", "America/Puerto_Rico"],
+  ["America/Virgin", "America/Puerto_Rico"],
+  ["America/Yellowknife", "America/Edmonton"],
+  ["Antarctica/DumontDUrville", "Pacific/Port_Moresby"],
+  ["Antarctica/McMurdo", "Pacific/Auckland"],
+  ["Antarctica/South_Pole", "Pacific/Auckland"],
+  ["Antarctica/Syowa", "Asia/Riyadh"],
+  ["Arctic/Longyearbyen", "Europe/Berlin"],
+  ["Asia/Aden", "Asia/Riyadh"],
+  ["Asia/Ashkhabad", "Asia/Ashgabat"],
+  ["Asia/Bahrain", "Asia/Qatar"],
+  ["Asia/Brunei", "Asia/Kuching"],
+  ["Asia/Calcutta", "Asia/Kolkata"],
+  ["Asia/Choibalsan", "Asia/Ulaanbaatar"],
+  ["Asia/Chongqing", "Asia/Shanghai"],
+  ["Asia/Chungking", "Asia/Shanghai"],
+  ["Asia/Dacca", "Asia/Dhaka"],
+  ["Asia/Harbin", "Asia/Shanghai"],
+  ["Asia/Istanbul", "Europe/Istanbul"],
+  ["Asia/Kashgar", "Asia/Urumqi"],
+  ["Asia/Katmandu", "Asia/Kathmandu"],
+  ["Asia/Kuala_Lumpur", "Asia/Singapore"],
+  ["Asia/Kuwait", "Asia/Riyadh"],
+  ["Asia/Macao", "Asia/Macau"],
+  ["Asia/Muscat", "Asia/Dubai"],
+  ["Asia/Phnom_Penh", "Asia/Bangkok"],
+  ["Asia/Rangoon", "Asia/Yangon"],
+  ["Asia/Saigon", "Asia/Ho_Chi_Minh"],
+  ["Asia/Tel_Aviv", "Asia/Jerusalem"],
+  ["Asia/Thimbu", "Asia/Thimphu"],
+  ["Asia/Ujung_Pandang", "Asia/Makassar"],
+  ["Asia/Ulan_Bator", "Asia/Ulaanbaatar"],
+  ["Asia/Vientiane", "Asia/Bangkok"],
+  ["Atlantic/Faeroe", "Atlantic/Faroe"],
+  ["Atlantic/Jan_Mayen", "Europe/Berlin"],
+  ["Atlantic/Reykjavik", "Africa/Abidjan"],
+  ["Atlantic/St_Helena", "Africa/Abidjan"],
+  ["Australia/ACT", "Australia/Sydney"],
+  ["Australia/Canberra", "Australia/Sydney"],
+  ["Australia/Currie", "Australia/Hobart"],
+  ["Australia/LHI", "Australia/Lord_Howe"],
+  ["Australia/NSW", "Australia/Sydney"],
+  ["Australia/North", "Australia/Darwin"],
+  ["Australia/Queensland", "Australia/Brisbane"],
+  ["Australia/South", "Australia/Adelaide"],
+  ["Australia/Tasmania", "Australia/Hobart"],
+  ["Australia/Victoria", "Australia/Melbourne"],
+  ["Australia/West", "Australia/Perth"],
+  ["Australia/Yancowinna", "Australia/Broken_Hill"],
+  ["Brazil/Acre", "America/Rio_Branco"],
+  ["Brazil/DeNoronha", "America/Noronha"],
+  ["Brazil/East", "America/Sao_Paulo"],
+  ["Brazil/West", "America/Manaus"],
+  ["CET", "Europe/Brussels"],
+  ["Canada/Atlantic", "America/Halifax"],
+  ["Canada/Central", "America/Winnipeg"],
+  ["Canada/Eastern", "America/Toronto"],
+  ["Canada/Mountain", "America/Edmonton"],
+  ["Canada/Newfoundland", "America/St_Johns"],
+  ["Canada/Pacific", "America/Vancouver"],
+  ["Canada/Saskatchewan", "America/Regina"],
+  ["Canada/Yukon", "America/Whitehorse"],
+  ["Chile/Continental", "America/Santiago"],
+  ["Chile/EasterIsland", "Pacific/Easter"],
+  ["Cuba", "America/Havana"],
+  ["EET", "Europe/Athens"],
+  ["EST", "America/Panama"],
+  ["Egypt", "Africa/Cairo"],
+  ["Eire", "Europe/Dublin"],
+  ["Etc/GMT+0", "Etc/GMT"],
+  ["Etc/GMT-0", "Etc/GMT"],
+  ["Etc/GMT0", "Etc/GMT"],
+  ["Etc/Greenwich", "Etc/GMT"],
+  ["Etc/UCT", "Etc/UTC"],
+  ["Etc/Universal", "Etc/UTC"],
+  ["Etc/Zulu", "Etc/UTC"],
+  ["Europe/Amsterdam", "Europe/Brussels"],
+  ["Europe/Belfast", "Europe/London"],
+  ["Europe/Bratislava", "Europe/Prague"],
+  ["Europe/Busingen", "Europe/Zurich"],
+  ["Europe/Copenhagen", "Europe/Berlin"],
+  ["Europe/Guernsey", "Europe/London"],
+  ["Europe/Isle_of_Man", "Europe/London"],
+  ["Europe/Jersey", "Europe/London"],
+  ["Europe/Kiev", "Europe/Kyiv"],
+  ["Europe/Ljubljana", "Europe/Belgrade"],
+  ["Europe/Luxembourg", "Europe/Brussels"],
+  ["Europe/Mariehamn", "Europe/Helsinki"],
+  ["Europe/Monaco", "Europe/Paris"],
+  ["Europe/Nicosia", "Asia/Nicosia"],
+  ["Europe/Oslo", "Europe/Berlin"],
+  ["Europe/Podgorica", "Europe/Belgrade"],
+  ["Europe/San_Marino", "Europe/Rome"],
+  ["Europe/Sarajevo", "Europe/Belgrade"],
+  ["Europe/Skopje", "Europe/Belgrade"],
+  ["Europe/Stockholm", "Europe/Berlin"],
+  ["Europe/Tiraspol", "Europe/Chisinau"],
+  ["Europe/Uzhgorod", "Europe/Kyiv"],
+  ["Europe/Vaduz", "Europe/Zurich"],
+  ["Europe/Vatican", "Europe/Rome"],
+  ["Europe/Zagreb", "Europe/Belgrade"],
+  ["Europe/Zaporozhye", "Europe/Kyiv"],
+  ["GB", "Europe/London"],
+  ["GB-Eire", "Europe/London"],
+  ["GMT", "Etc/GMT"],
+  ["GMT+0", "Etc/GMT"],
+  ["GMT-0", "Etc/GMT"],
+  ["GMT0", "Etc/GMT"],
+  ["Greenwich", "Etc/GMT"],
+  ["HST", "Pacific/Honolulu"],
+  ["Hongkong", "Asia/Hong_Kong"],
+  ["Iceland", "Africa/Abidjan"],
+  ["Indian/Antananarivo", "Africa/Nairobi"],
+  ["Indian/Christmas", "Asia/Bangkok"],
+  ["Indian/Cocos", "Asia/Yangon"],
+  ["Indian/Comoro", "Africa/Nairobi"],
+  ["Indian/Kerguelen", "Indian/Maldives"],
+  ["Indian/Mahe", "Asia/Dubai"],
+  ["Indian/Mayotte", "Africa/Nairobi"],
+  ["Indian/Reunion", "Asia/Dubai"],
+  ["Iran", "Asia/Tehran"],
+  ["Israel", "Asia/Jerusalem"],
+  ["Jamaica", "America/Jamaica"],
+  ["Japan", "Asia/Tokyo"],
+  ["Kwajalein", "Pacific/Kwajalein"],
+  ["Libya", "Africa/Tripoli"],
+  ["MET", "Europe/Brussels"],
+  ["MST", "America/Phoenix"],
+  ["Mexico/BajaNorte", "America/Tijuana"],
+  ["Mexico/BajaSur", "America/Mazatlan"],
+  ["Mexico/General", "America/Mexico_City"],
+  ["NZ", "Pacific/Auckland"],
+  ["NZ-CHAT", "Pacific/Chatham"],
+  ["Navajo", "America/Denver"],
+  ["PRC", "Asia/Shanghai"],
+  ["Pacific/Chuuk", "Pacific/Port_Moresby"],
+  ["Pacific/Enderbury", "Pacific/Kanton"],
+  ["Pacific/Funafuti", "Pacific/Tarawa"],
+  ["Pacific/Johnston", "Pacific/Honolulu"],
+  ["Pacific/Majuro", "Pacific/Tarawa"],
+  ["Pacific/Midway", "Pacific/Pago_Pago"],
+  ["Pacific/Pohnpei", "Pacific/Guadalcanal"],
+  ["Pacific/Ponape", "Pacific/Guadalcanal"],
+  ["Pacific/Saipan", "Pacific/Guam"],
+  ["Pacific/Samoa", "Pacific/Pago_Pago"],
+  ["Pacific/Truk", "Pacific/Port_Moresby"],
+  ["Pacific/Wake", "Pacific/Tarawa"],
+  ["Pacific/Wallis", "Pacific/Tarawa"],
+  ["Pacific/Yap", "Pacific/Port_Moresby"],
+  ["Poland", "Europe/Warsaw"],
+  ["Portugal", "Europe/Lisbon"],
+  ["ROC", "Asia/Taipei"],
+  ["ROK", "Asia/Seoul"],
+  ["Singapore", "Asia/Singapore"],
+  ["Turkey", "Europe/Istanbul"],
+  ["UCT", "Etc/UTC"],
+  ["US/Alaska", "America/Anchorage"],
+  ["US/Aleutian", "America/Adak"],
+  ["US/Arizona", "America/Phoenix"],
+  ["US/Central", "America/Chicago"],
+  ["US/East-Indiana", "America/Indiana/Indianapolis"],
+  ["US/Eastern", "America/New_York"],
+  ["US/Hawaii", "Pacific/Honolulu"],
+  ["US/Indiana-Starke", "America/Indiana/Knox"],
+  ["US/Michigan", "America/Detroit"],
+  ["US/Mountain", "America/Denver"],
+  ["US/Pacific", "America/Los_Angeles"],
+  ["US/Samoa", "Pacific/Pago_Pago"],
+  ["UTC", "Etc/UTC"],
+  ["Universal", "Etc/UTC"],
+  ["W-SU", "Europe/Moscow"],
+  ["WET", "Europe/Lisbon"],
+  ["Zulu", "Etc/UTC"]
+];
+const TZDB_ZONE_COUNTRY = {
+  "africa/abidjan": ["CI", "BF", "GH", "GM", "GN", "IS", "ML", "MR", "SH", "SL", "SN", "TG"],
+  "africa/accra": ["GH"],
+  "africa/addis_ababa": ["ET"],
+  "africa/algiers": ["DZ"],
+  "africa/asmara": ["ER"],
+  "africa/bamako": ["ML"],
+  "africa/bangui": ["CF"],
+  "africa/banjul": ["GM"],
+  "africa/bissau": ["GW"],
+  "africa/blantyre": ["MW"],
+  "africa/brazzaville": ["CG"],
+  "africa/bujumbura": ["BI"],
+  "africa/cairo": ["EG"],
+  "africa/casablanca": ["MA"],
+  "africa/ceuta": ["ES"],
+  "africa/conakry": ["GN"],
+  "africa/dakar": ["SN"],
+  "africa/dar_es_salaam": ["TZ"],
+  "africa/djibouti": ["DJ"],
+  "africa/douala": ["CM"],
+  "africa/el_aaiun": ["EH"],
+  "africa/freetown": ["SL"],
+  "africa/gaborone": ["BW"],
+  "africa/harare": ["ZW"],
+  "africa/johannesburg": ["ZA", "LS", "SZ"],
+  "africa/juba": ["SS"],
+  "africa/kampala": ["UG"],
+  "africa/khartoum": ["SD"],
+  "africa/kigali": ["RW"],
+  "africa/kinshasa": ["CD"],
+  "africa/lagos": ["NG", "AO", "BJ", "CD", "CF", "CG", "CM", "GA", "GQ", "NE"],
+  "africa/libreville": ["GA"],
+  "africa/lome": ["TG"],
+  "africa/luanda": ["AO"],
+  "africa/lubumbashi": ["CD"],
+  "africa/lusaka": ["ZM"],
+  "africa/malabo": ["GQ"],
+  "africa/maputo": ["MZ", "BI", "BW", "CD", "MW", "RW", "ZM", "ZW"],
+  "africa/maseru": ["LS"],
+  "africa/mbabane": ["SZ"],
+  "africa/mogadishu": ["SO"],
+  "africa/monrovia": ["LR"],
+  "africa/nairobi": ["KE", "DJ", "ER", "ET", "KM", "MG", "SO", "TZ", "UG", "YT"],
+  "africa/ndjamena": ["TD"],
+  "africa/niamey": ["NE"],
+  "africa/nouakchott": ["MR"],
+  "africa/ouagadougou": ["BF"],
+  "africa/porto-novo": ["BJ"],
+  "africa/sao_tome": ["ST"],
+  "africa/tripoli": ["LY"],
+  "africa/tunis": ["TN"],
+  "africa/windhoek": ["NA"],
+  "america/adak": ["US"],
+  "america/anchorage": ["US"],
+  "america/anguilla": ["AI"],
+  "america/antigua": ["AG"],
+  "america/araguaina": ["BR"],
+  "america/argentina/buenos_aires": ["AR"],
+  "america/argentina/catamarca": ["AR"],
+  "america/argentina/cordoba": ["AR"],
+  "america/argentina/jujuy": ["AR"],
+  "america/argentina/la_rioja": ["AR"],
+  "america/argentina/mendoza": ["AR"],
+  "america/argentina/rio_gallegos": ["AR"],
+  "america/argentina/salta": ["AR"],
+  "america/argentina/san_juan": ["AR"],
+  "america/argentina/san_luis": ["AR"],
+  "america/argentina/tucuman": ["AR"],
+  "america/argentina/ushuaia": ["AR"],
+  "america/aruba": ["AW"],
+  "america/asuncion": ["PY"],
+  "america/atikokan": ["CA"],
+  "america/bahia": ["BR"],
+  "america/bahia_banderas": ["MX"],
+  "america/barbados": ["BB"],
+  "america/belem": ["BR"],
+  "america/belize": ["BZ"],
+  "america/blanc-sablon": ["CA"],
+  "america/boa_vista": ["BR"],
+  "america/bogota": ["CO"],
+  "america/boise": ["US"],
+  "america/cambridge_bay": ["CA"],
+  "america/campo_grande": ["BR"],
+  "america/cancun": ["MX"],
+  "america/caracas": ["VE"],
+  "america/cayenne": ["GF"],
+  "america/cayman": ["KY"],
+  "america/chicago": ["US"],
+  "america/chihuahua": ["MX"],
+  "america/ciudad_juarez": ["MX"],
+  "america/costa_rica": ["CR"],
+  "america/coyhaique": ["CL"],
+  "america/creston": ["CA"],
+  "america/cuiaba": ["BR"],
+  "america/curacao": ["CW"],
+  "america/danmarkshavn": ["GL"],
+  "america/dawson": ["CA"],
+  "america/dawson_creek": ["CA"],
+  "america/denver": ["US"],
+  "america/detroit": ["US"],
+  "america/dominica": ["DM"],
+  "america/edmonton": ["CA"],
+  "america/eirunepe": ["BR"],
+  "america/el_salvador": ["SV"],
+  "america/fort_nelson": ["CA"],
+  "america/fortaleza": ["BR"],
+  "america/glace_bay": ["CA"],
+  "america/goose_bay": ["CA"],
+  "america/grand_turk": ["TC"],
+  "america/grenada": ["GD"],
+  "america/guadeloupe": ["GP"],
+  "america/guatemala": ["GT"],
+  "america/guayaquil": ["EC"],
+  "america/guyana": ["GY"],
+  "america/halifax": ["CA"],
+  "america/havana": ["CU"],
+  "america/hermosillo": ["MX"],
+  "america/indiana/indianapolis": ["US"],
+  "america/indiana/knox": ["US"],
+  "america/indiana/marengo": ["US"],
+  "america/indiana/petersburg": ["US"],
+  "america/indiana/tell_city": ["US"],
+  "america/indiana/vevay": ["US"],
+  "america/indiana/vincennes": ["US"],
+  "america/indiana/winamac": ["US"],
+  "america/inuvik": ["CA"],
+  "america/iqaluit": ["CA"],
+  "america/jamaica": ["JM"],
+  "america/juneau": ["US"],
+  "america/kentucky/louisville": ["US"],
+  "america/kentucky/monticello": ["US"],
+  "america/kralendijk": ["BQ"],
+  "america/la_paz": ["BO"],
+  "america/lima": ["PE"],
+  "america/los_angeles": ["US"],
+  "america/lower_princes": ["SX"],
+  "america/maceio": ["BR"],
+  "america/managua": ["NI"],
+  "america/manaus": ["BR"],
+  "america/marigot": ["MF"],
+  "america/martinique": ["MQ"],
+  "america/matamoros": ["MX"],
+  "america/mazatlan": ["MX"],
+  "america/menominee": ["US"],
+  "america/merida": ["MX"],
+  "america/metlakatla": ["US"],
+  "america/mexico_city": ["MX"],
+  "america/miquelon": ["PM"],
+  "america/moncton": ["CA"],
+  "america/monterrey": ["MX"],
+  "america/montevideo": ["UY"],
+  "america/montserrat": ["MS"],
+  "america/nassau": ["BS"],
+  "america/new_york": ["US"],
+  "america/nome": ["US"],
+  "america/noronha": ["BR"],
+  "america/north_dakota/beulah": ["US"],
+  "america/north_dakota/center": ["US"],
+  "america/north_dakota/new_salem": ["US"],
+  "america/nuuk": ["GL"],
+  "america/ojinaga": ["MX"],
+  "america/panama": ["PA", "CA", "KY"],
+  "america/paramaribo": ["SR"],
+  "america/phoenix": ["US", "CA"],
+  "america/port-au-prince": ["HT"],
+  "america/port_of_spain": ["TT"],
+  "america/porto_velho": ["BR"],
+  "america/puerto_rico": ["PR", "AG", "CA", "AI", "AW", "BL", "BQ", "CW", "DM", "GD", "GP", "KN", "LC", "MF", "MS", "SX", "TT", "VC", "VG", "VI"],
+  "america/punta_arenas": ["CL"],
+  "america/rankin_inlet": ["CA"],
+  "america/recife": ["BR"],
+  "america/regina": ["CA"],
+  "america/resolute": ["CA"],
+  "america/rio_branco": ["BR"],
+  "america/santarem": ["BR"],
+  "america/santiago": ["CL"],
+  "america/santo_domingo": ["DO"],
+  "america/sao_paulo": ["BR"],
+  "america/scoresbysund": ["GL"],
+  "america/sitka": ["US"],
+  "america/st_barthelemy": ["BL"],
+  "america/st_johns": ["CA"],
+  "america/st_kitts": ["KN"],
+  "america/st_lucia": ["LC"],
+  "america/st_thomas": ["VI"],
+  "america/st_vincent": ["VC"],
+  "america/swift_current": ["CA"],
+  "america/tegucigalpa": ["HN"],
+  "america/thule": ["GL"],
+  "america/tijuana": ["MX"],
+  "america/toronto": ["CA", "BS"],
+  "america/tortola": ["VG"],
+  "america/vancouver": ["CA"],
+  "america/whitehorse": ["CA"],
+  "america/winnipeg": ["CA"],
+  "america/yakutat": ["US"],
+  "antarctica/casey": ["AQ"],
+  "antarctica/davis": ["AQ"],
+  "antarctica/dumontdurville": ["AQ"],
+  "antarctica/macquarie": ["AU"],
+  "antarctica/mawson": ["AQ"],
+  "antarctica/mcmurdo": ["AQ"],
+  "antarctica/palmer": ["AQ"],
+  "antarctica/rothera": ["AQ"],
+  "antarctica/syowa": ["AQ"],
+  "antarctica/troll": ["AQ"],
+  "antarctica/vostok": ["AQ"],
+  "arctic/longyearbyen": ["SJ"],
+  "asia/aden": ["YE"],
+  "asia/almaty": ["KZ"],
+  "asia/amman": ["JO"],
+  "asia/anadyr": ["RU"],
+  "asia/aqtau": ["KZ"],
+  "asia/aqtobe": ["KZ"],
+  "asia/ashgabat": ["TM"],
+  "asia/atyrau": ["KZ"],
+  "asia/baghdad": ["IQ"],
+  "asia/bahrain": ["BH"],
+  "asia/baku": ["AZ"],
+  "asia/bangkok": ["TH", "CX", "KH", "LA", "VN"],
+  "asia/barnaul": ["RU"],
+  "asia/beirut": ["LB"],
+  "asia/bishkek": ["KG"],
+  "asia/brunei": ["BN"],
+  "asia/chita": ["RU"],
+  "asia/colombo": ["LK"],
+  "asia/damascus": ["SY"],
+  "asia/dhaka": ["BD"],
+  "asia/dili": ["TL"],
+  "asia/dubai": ["AE", "OM", "RE", "SC", "TF"],
+  "asia/dushanbe": ["TJ"],
+  "asia/famagusta": ["CY"],
+  "asia/gaza": ["PS"],
+  "asia/hebron": ["PS"],
+  "asia/ho_chi_minh": ["VN"],
+  "asia/hong_kong": ["HK"],
+  "asia/hovd": ["MN"],
+  "asia/irkutsk": ["RU"],
+  "asia/jakarta": ["ID"],
+  "asia/jayapura": ["ID"],
+  "asia/jerusalem": ["IL"],
+  "asia/kabul": ["AF"],
+  "asia/kamchatka": ["RU"],
+  "asia/karachi": ["PK"],
+  "asia/kathmandu": ["NP"],
+  "asia/khandyga": ["RU"],
+  "asia/kolkata": ["IN"],
+  "asia/krasnoyarsk": ["RU"],
+  "asia/kuala_lumpur": ["MY"],
+  "asia/kuching": ["MY", "BN"],
+  "asia/kuwait": ["KW"],
+  "asia/macau": ["MO"],
+  "asia/magadan": ["RU"],
+  "asia/makassar": ["ID"],
+  "asia/manila": ["PH"],
+  "asia/muscat": ["OM"],
+  "asia/nicosia": ["CY"],
+  "asia/novokuznetsk": ["RU"],
+  "asia/novosibirsk": ["RU"],
+  "asia/omsk": ["RU"],
+  "asia/oral": ["KZ"],
+  "asia/phnom_penh": ["KH"],
+  "asia/pontianak": ["ID"],
+  "asia/pyongyang": ["KP"],
+  "asia/qatar": ["QA", "BH"],
+  "asia/qostanay": ["KZ"],
+  "asia/qyzylorda": ["KZ"],
+  "asia/riyadh": ["SA", "AQ", "KW", "YE"],
+  "asia/sakhalin": ["RU"],
+  "asia/samarkand": ["UZ"],
+  "asia/seoul": ["KR"],
+  "asia/shanghai": ["CN"],
+  "asia/singapore": ["SG", "AQ", "MY"],
+  "asia/srednekolymsk": ["RU"],
+  "asia/taipei": ["TW"],
+  "asia/tashkent": ["UZ"],
+  "asia/tbilisi": ["GE"],
+  "asia/tehran": ["IR"],
+  "asia/thimphu": ["BT"],
+  "asia/tokyo": ["JP", "AU"],
+  "asia/tomsk": ["RU"],
+  "asia/ulaanbaatar": ["MN"],
+  "asia/urumqi": ["CN"],
+  "asia/ust-nera": ["RU"],
+  "asia/vientiane": ["LA"],
+  "asia/vladivostok": ["RU"],
+  "asia/yakutsk": ["RU"],
+  "asia/yangon": ["MM", "CC"],
+  "asia/yekaterinburg": ["RU"],
+  "asia/yerevan": ["AM"],
+  "atlantic/azores": ["PT"],
+  "atlantic/bermuda": ["BM"],
+  "atlantic/canary": ["ES"],
+  "atlantic/cape_verde": ["CV"],
+  "atlantic/faroe": ["FO"],
+  "atlantic/madeira": ["PT"],
+  "atlantic/reykjavik": ["IS"],
+  "atlantic/south_georgia": ["GS"],
+  "atlantic/st_helena": ["SH"],
+  "atlantic/stanley": ["FK"],
+  "australia/adelaide": ["AU"],
+  "australia/brisbane": ["AU"],
+  "australia/broken_hill": ["AU"],
+  "australia/darwin": ["AU"],
+  "australia/eucla": ["AU"],
+  "australia/hobart": ["AU"],
+  "australia/lindeman": ["AU"],
+  "australia/lord_howe": ["AU"],
+  "australia/melbourne": ["AU"],
+  "australia/perth": ["AU"],
+  "australia/sydney": ["AU"],
+  "europe/amsterdam": ["NL"],
+  "europe/andorra": ["AD"],
+  "europe/astrakhan": ["RU"],
+  "europe/athens": ["GR"],
+  "europe/belgrade": ["RS", "BA", "HR", "ME", "MK", "SI"],
+  "europe/berlin": ["DE", "DK", "NO", "SE", "SJ"],
+  "europe/bratislava": ["SK"],
+  "europe/brussels": ["BE", "LU", "NL"],
+  "europe/bucharest": ["RO"],
+  "europe/budapest": ["HU"],
+  "europe/busingen": ["DE"],
+  "europe/chisinau": ["MD"],
+  "europe/copenhagen": ["DK"],
+  "europe/dublin": ["IE"],
+  "europe/gibraltar": ["GI"],
+  "europe/guernsey": ["GG"],
+  "europe/helsinki": ["FI", "AX"],
+  "europe/isle_of_man": ["IM"],
+  "europe/istanbul": ["TR"],
+  "europe/jersey": ["JE"],
+  "europe/kaliningrad": ["RU"],
+  "europe/kirov": ["RU"],
+  "europe/kyiv": ["UA"],
+  "europe/lisbon": ["PT"],
+  "europe/ljubljana": ["SI"],
+  "europe/london": ["GB", "GG", "IM", "JE"],
+  "europe/luxembourg": ["LU"],
+  "europe/madrid": ["ES"],
+  "europe/malta": ["MT"],
+  "europe/mariehamn": ["AX"],
+  "europe/minsk": ["BY"],
+  "europe/monaco": ["MC"],
+  "europe/moscow": ["RU"],
+  "europe/oslo": ["NO"],
+  "europe/paris": ["FR", "MC"],
+  "europe/podgorica": ["ME"],
+  "europe/prague": ["CZ", "SK"],
+  "europe/riga": ["LV"],
+  "europe/rome": ["IT", "SM", "VA"],
+  "europe/samara": ["RU"],
+  "europe/san_marino": ["SM"],
+  "europe/sarajevo": ["BA"],
+  "europe/saratov": ["RU"],
+  "europe/simferopol": ["RU", "UA"],
+  "europe/skopje": ["MK"],
+  "europe/sofia": ["BG"],
+  "europe/stockholm": ["SE"],
+  "europe/tallinn": ["EE"],
+  "europe/tirane": ["AL"],
+  "europe/ulyanovsk": ["RU"],
+  "europe/vaduz": ["LI"],
+  "europe/vatican": ["VA"],
+  "europe/vienna": ["AT"],
+  "europe/vilnius": ["LT"],
+  "europe/volgograd": ["RU"],
+  "europe/warsaw": ["PL"],
+  "europe/zagreb": ["HR"],
+  "europe/zurich": ["CH", "DE", "LI"],
+  "indian/antananarivo": ["MG"],
+  "indian/chagos": ["IO"],
+  "indian/christmas": ["CX"],
+  "indian/cocos": ["CC"],
+  "indian/comoro": ["KM"],
+  "indian/kerguelen": ["TF"],
+  "indian/mahe": ["SC"],
+  "indian/maldives": ["MV", "TF"],
+  "indian/mauritius": ["MU"],
+  "indian/mayotte": ["YT"],
+  "indian/reunion": ["RE"],
+  "pacific/apia": ["WS"],
+  "pacific/auckland": ["NZ", "AQ"],
+  "pacific/bougainville": ["PG"],
+  "pacific/chatham": ["NZ"],
+  "pacific/chuuk": ["FM"],
+  "pacific/easter": ["CL"],
+  "pacific/efate": ["VU"],
+  "pacific/fakaofo": ["TK"],
+  "pacific/fiji": ["FJ"],
+  "pacific/funafuti": ["TV"],
+  "pacific/galapagos": ["EC"],
+  "pacific/gambier": ["PF"],
+  "pacific/guadalcanal": ["SB", "FM"],
+  "pacific/guam": ["GU", "MP"],
+  "pacific/honolulu": ["US"],
+  "pacific/kanton": ["KI"],
+  "pacific/kiritimati": ["KI"],
+  "pacific/kosrae": ["FM"],
+  "pacific/kwajalein": ["MH"],
+  "pacific/majuro": ["MH"],
+  "pacific/marquesas": ["PF"],
+  "pacific/midway": ["UM"],
+  "pacific/nauru": ["NR"],
+  "pacific/niue": ["NU"],
+  "pacific/norfolk": ["NF"],
+  "pacific/noumea": ["NC"],
+  "pacific/pago_pago": ["AS", "UM"],
+  "pacific/palau": ["PW"],
+  "pacific/pitcairn": ["PN"],
+  "pacific/pohnpei": ["FM"],
+  "pacific/port_moresby": ["PG", "AQ", "FM"],
+  "pacific/rarotonga": ["CK"],
+  "pacific/saipan": ["MP"],
+  "pacific/tahiti": ["PF"],
+  "pacific/tarawa": ["KI", "MH", "TV", "UM", "WF"],
+  "pacific/tongatapu": ["TO"],
+  "pacific/wake": ["UM"],
+  "pacific/wallis": ["WF"]
+};
+const COUNTRY_NAMES = {
+  "AD": "Andorra",
+  "AE": "United Arab Emirates",
+  "AF": "Afghanistan",
+  "AG": "Antigua & Barbuda",
+  "AI": "Anguilla",
+  "AL": "Albania",
+  "AM": "Armenia",
+  "AO": "Angola",
+  "AQ": "Antarctica",
+  "AR": "Argentina",
+  "AS": "Samoa (American)",
+  "AT": "Austria",
+  "AU": "Australia",
+  "AW": "Aruba",
+  "AX": "Åland Islands",
+  "AZ": "Azerbaijan",
+  "BA": "Bosnia & Herzegovina",
+  "BB": "Barbados",
+  "BD": "Bangladesh",
+  "BE": "Belgium",
+  "BF": "Burkina Faso",
+  "BG": "Bulgaria",
+  "BH": "Bahrain",
+  "BI": "Burundi",
+  "BJ": "Benin",
+  "BL": "St Barthelemy",
+  "BM": "Bermuda",
+  "BN": "Brunei",
+  "BO": "Bolivia",
+  "BQ": "Caribbean NL",
+  "BR": "Brazil",
+  "BS": "Bahamas",
+  "BT": "Bhutan",
+  "BV": "Bouvet Island",
+  "BW": "Botswana",
+  "BY": "Belarus",
+  "BZ": "Belize",
+  "CA": "Canada",
+  "CC": "Cocos (Keeling) Islands",
+  "CD": "Congo (Dem. Rep.)",
+  "CF": "Central African Rep.",
+  "CG": "Congo (Rep.)",
+  "CH": "Switzerland",
+  "CI": "Côte d’Ivoire",
+  "CK": "Cook Islands",
+  "CL": "Chile",
+  "CM": "Cameroon",
+  "CN": "China",
+  "CO": "Colombia",
+  "CR": "Costa Rica",
+  "CU": "Cuba",
+  "CV": "Cape Verde",
+  "CW": "Curaçao",
+  "CX": "Christmas Island",
+  "CY": "Cyprus",
+  "CZ": "Czech Republic",
+  "DE": "Germany",
+  "DJ": "Djibouti",
+  "DK": "Denmark",
+  "DM": "Dominica",
+  "DO": "Dominican Republic",
+  "DZ": "Algeria",
+  "EC": "Ecuador",
+  "EE": "Estonia",
+  "EG": "Egypt",
+  "EH": "Western Sahara",
+  "ER": "Eritrea",
+  "ES": "Spain",
+  "ET": "Ethiopia",
+  "FI": "Finland",
+  "FJ": "Fiji",
+  "FK": "Falkland Islands",
+  "FM": "Micronesia",
+  "FO": "Faroe Islands",
+  "FR": "France",
+  "GA": "Gabon",
+  "GB": "Britain (UK)",
+  "GD": "Grenada",
+  "GE": "Georgia",
+  "GF": "French Guiana",
+  "GG": "Guernsey",
+  "GH": "Ghana",
+  "GI": "Gibraltar",
+  "GL": "Greenland",
+  "GM": "Gambia",
+  "GN": "Guinea",
+  "GP": "Guadeloupe",
+  "GQ": "Equatorial Guinea",
+  "GR": "Greece",
+  "GS": "South Georgia & the South Sandwich Islands",
+  "GT": "Guatemala",
+  "GU": "Guam",
+  "GW": "Guinea-Bissau",
+  "GY": "Guyana",
+  "HK": "Hong Kong",
+  "HM": "Heard Island & McDonald Islands",
+  "HN": "Honduras",
+  "HR": "Croatia",
+  "HT": "Haiti",
+  "HU": "Hungary",
+  "ID": "Indonesia",
+  "IE": "Ireland",
+  "IL": "Israel",
+  "IM": "Isle of Man",
+  "IN": "India",
+  "IO": "British Indian Ocean Territory",
+  "IQ": "Iraq",
+  "IR": "Iran",
+  "IS": "Iceland",
+  "IT": "Italy",
+  "JE": "Jersey",
+  "JM": "Jamaica",
+  "JO": "Jordan",
+  "JP": "Japan",
+  "KE": "Kenya",
+  "KG": "Kyrgyzstan",
+  "KH": "Cambodia",
+  "KI": "Kiribati",
+  "KM": "Comoros",
+  "KN": "St Kitts & Nevis",
+  "KP": "Korea (North)",
+  "KR": "Korea (South)",
+  "KW": "Kuwait",
+  "KY": "Cayman Islands",
+  "KZ": "Kazakhstan",
+  "LA": "Laos",
+  "LB": "Lebanon",
+  "LC": "St Lucia",
+  "LI": "Liechtenstein",
+  "LK": "Sri Lanka",
+  "LR": "Liberia",
+  "LS": "Lesotho",
+  "LT": "Lithuania",
+  "LU": "Luxembourg",
+  "LV": "Latvia",
+  "LY": "Libya",
+  "MA": "Morocco",
+  "MC": "Monaco",
+  "MD": "Moldova",
+  "ME": "Montenegro",
+  "MF": "St Martin (French)",
+  "MG": "Madagascar",
+  "MH": "Marshall Islands",
+  "MK": "North Macedonia",
+  "ML": "Mali",
+  "MM": "Myanmar (Burma)",
+  "MN": "Mongolia",
+  "MO": "Macau",
+  "MP": "Northern Mariana Islands",
+  "MQ": "Martinique",
+  "MR": "Mauritania",
+  "MS": "Montserrat",
+  "MT": "Malta",
+  "MU": "Mauritius",
+  "MV": "Maldives",
+  "MW": "Malawi",
+  "MX": "Mexico",
+  "MY": "Malaysia",
+  "MZ": "Mozambique",
+  "NA": "Namibia",
+  "NC": "New Caledonia",
+  "NE": "Niger",
+  "NF": "Norfolk Island",
+  "NG": "Nigeria",
+  "NI": "Nicaragua",
+  "NL": "Netherlands",
+  "NO": "Norway",
+  "NP": "Nepal",
+  "NR": "Nauru",
+  "NU": "Niue",
+  "NZ": "New Zealand",
+  "OM": "Oman",
+  "PA": "Panama",
+  "PE": "Peru",
+  "PF": "French Polynesia",
+  "PG": "Papua New Guinea",
+  "PH": "Philippines",
+  "PK": "Pakistan",
+  "PL": "Poland",
+  "PM": "St Pierre & Miquelon",
+  "PN": "Pitcairn",
+  "PR": "Puerto Rico",
+  "PS": "Palestine",
+  "PT": "Portugal",
+  "PW": "Palau",
+  "PY": "Paraguay",
+  "QA": "Qatar",
+  "RE": "Réunion",
+  "RO": "Romania",
+  "RS": "Serbia",
+  "RU": "Russia",
+  "RW": "Rwanda",
+  "SA": "Saudi Arabia",
+  "SB": "Solomon Islands",
+  "SC": "Seychelles",
+  "SD": "Sudan",
+  "SE": "Sweden",
+  "SG": "Singapore",
+  "SH": "St Helena",
+  "SI": "Slovenia",
+  "SJ": "Svalbard & Jan Mayen",
+  "SK": "Slovakia",
+  "SL": "Sierra Leone",
+  "SM": "San Marino",
+  "SN": "Senegal",
+  "SO": "Somalia",
+  "SR": "Suriname",
+  "SS": "South Sudan",
+  "ST": "Sao Tome & Principe",
+  "SV": "El Salvador",
+  "SX": "St Maarten (Dutch)",
+  "SY": "Syria",
+  "SZ": "Eswatini (Swaziland)",
+  "TC": "Turks & Caicos Is",
+  "TD": "Chad",
+  "TF": "French S. Terr.",
+  "TG": "Togo",
+  "TH": "Thailand",
+  "TJ": "Tajikistan",
+  "TK": "Tokelau",
+  "TL": "East Timor",
+  "TM": "Turkmenistan",
+  "TN": "Tunisia",
+  "TO": "Tonga",
+  "TR": "Turkey",
+  "TT": "Trinidad & Tobago",
+  "TV": "Tuvalu",
+  "TW": "Taiwan",
+  "TZ": "Tanzania",
+  "UA": "Ukraine",
+  "UG": "Uganda",
+  "UM": "US minor outlying islands",
+  "US": "United States",
+  "UY": "Uruguay",
+  "UZ": "Uzbekistan",
+  "VA": "Vatican City",
+  "VC": "St Vincent",
+  "VE": "Venezuela",
+  "VG": "Virgin Islands (UK)",
+  "VI": "Virgin Islands (US)",
+  "VN": "Vietnam",
+  "VU": "Vanuatu",
+  "WF": "Wallis & Futuna",
+  "WS": "Samoa (western)",
+  "YE": "Yemen",
+  "YT": "Mayotte",
+  "ZA": "South Africa",
+  "ZM": "Zambia",
+  "ZW": "Zimbabwe"
+};
+
+const POPULAR = ["New York","London","Tokyo","Sydney","Dubai","Paris"];
+const QUICK = ["New York","London","Tokyo","Sydney"];
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const CITY_BY_ZONE = new Map();
+for (const c of CITIES) {
+  const k = c[2].toLowerCase();
+  if (!CITY_BY_ZONE.has(k)) CITY_BY_ZONE.set(k, c);
+}
+function byCity(name) {
+  const c = CITIES.find(x => x[0].toLowerCase() === name.toLowerCase());
+  return c ? makeCityZone(c) : null;
+}
+
+/* ============================================================
+   Timezone engine
+   ============================================================ */
+// Canonical IANA names supported by this browser (lowercased → canonical).
+const SUPPORTED = new Map();
+try {
+  if (typeof Intl.supportedValuesOf === 'function') {
+    for (const z of Intl.supportedValuesOf('timeZone')) SUPPORTED.set(z.toLowerCase(), z);
+  }
+} catch (e) { /* fall back to validation below */ }
+
+function zoneExists(name) {
+  try { new Intl.DateTimeFormat('en', { timeZone: name }); return true; }
+  catch (e) { return false; }
+}
+
+// Parse "+05:30", "UTC+5", "GMT-3:30", "+0530" → "+05:30" | "-03:30" | null
+function parseOffset(raw) {
+  const s = raw.trim().toUpperCase().replace(/^(UTC|GMT)\s*/, '');
+  // Bare zero-offset spellings (UTC, GMT, Z, Greenwich, Etc/UTC, …) — all normalize to UTC.
+  if (s === '' || s === '0' || s === 'Z' || s === 'ZULU' || s === 'UTC' || s === 'GMT'
+    || s === 'UCT' || s === 'UNIVERSAL' || s === 'GREENWICH'
+    || s === 'ETC/UTC' || s === 'ETC/GMT' || s === 'ETC/UCT' || s === 'ETC/UNIVERSAL' || s === 'ETC/GREENWICH') return '+00:00';
+  let sign = null, h = null, mi = 0;
+  let m = s.match(/^([+-])(\d{1,2}):?([0-5]\d)?$/);
+  if (m) { sign = m[1]; h = +m[2]; mi = m[3] ? +m[3] : 0; }
+  else {
+    m = s.match(/^([+-])(\d)(\d{2})$/);
+    if (m) { sign = m[1]; h = +m[2]; mi = +m[3]; }
+  }
+  if (h == null || h > 14 || (h === 14 && mi > 0) || mi > 59) return null;
+  return `${sign}${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+}
+
+// ---- Location factories ----
+function makeCityZone([city, country, zone]) {
+  return { kind: 'zone', name: zone, label: city, country, display: `${city}, ${country}`, inputText: `${city}, ${country}` };
+}
+function makePlainZone(name) {
+  const display = name === 'UTC' ? 'UTC' : zoneDisplay(name);
+  return { kind: 'zone', name, label: display, country: null, display, inputText: display };
+}
+function makeOffsetZone(off) {
+  if (off === '+00:00') return makePlainZone('UTC');
+  const name = 'UTC' + off;
+  return { kind: 'offset', name, label: name, country: null, display: name, inputText: name };
+}
+
+// Display name for a raw IANA zone: "Asia/Taipei" → "Taipei",
+// "America/Argentina/Buenos_Aires" → "Buenos Aires". Etc/* names use the
+// POSIX sign convention (inverted!), so show the real offset instead:
+// Etc/GMT-5 → "UTC+05:00".
+function zoneDisplay(name) {
+  if (/^etc\//i.test(name)) {
+    const m = name.match(/GMT([+-])(\d+)/i);
+    if (m) {
+      const h = +m[2];
+      if (h === 0) return 'UTC';
+      return `UTC${m[1] === '-' ? '+' : '-'}${pad(h)}:00`;
+    }
+    return 'UTC'; // Etc/UTC, Etc/GMT
+  }
+  return name.split('/').pop().replace(/_/g, ' ');
+}
+
+// A location built from the tzdb name tables (no curated city row for it).
+function makeZoneEntry(name, target) {
+  const codes = TZDB_ZONE_COUNTRY[name.toLowerCase()]
+    || (target ? TZDB_ZONE_COUNTRY[target.toLowerCase()] : null) || [];
+  const country = codes[0] ? (COUNTRY_NAMES[codes[0]] || null) : null;
+  const label = name === 'UTC' ? 'UTC' : zoneDisplay(name);
+  const display = country ? `${label}, ${country}` : label;
+  return { kind: 'zone', name, label, country, display, inputText: display, ianaTarget: target || null };
+}
+
+// A location's identity for dedupe: the *place* (its label), not its IANA
+// zone. Two different cities that share a zone (Mumbai & New Delhi, both
+// Asia/Kolkata) are distinct places and may both be shown; only the same
+// place is rejected as a duplicate. (Offset-style labels like "UTC+05:00"
+// also keep a fixed-offset card and its Etc/* twin deduped.)
+const keyOf = z => (z.label || z.name).toLowerCase().trim();
+
+// Free text → location (offset → exact city → IANA name → null)
+function normalizeZone(raw) {
+  const t = raw.trim();
+  if (!t) return null;
+  const off = parseOffset(t);
+  if (off) return makeOffsetZone(off);
+  const lc = t.toLowerCase();
+  const lcCity = lc.replace(/,.*$/, '');
+  let c = CITIES.find(x => x[0].toLowerCase() === lc);
+  if (!c) c = CITIES.find(x => x[0].toLowerCase() === lcCity);
+  if (c) return makeCityZone(c);
+  const canon = SUPPORTED.get(lc);
+  if (canon) {
+    const cc = CITY_BY_ZONE.get(canon.toLowerCase());
+    return cc ? makeCityZone(cc) : makeZoneEntry(canon);
+  }
+  if (zoneExists(t)) {
+    const cc = CITY_BY_ZONE.get(lc);
+    if (cc) return makeCityZone(cc);
+    const link = TZDB_LINKS.find(([n]) => n.toLowerCase() === lc);
+    return makeZoneEntry(t, link ? link[1] : null);
+  }
+  return null;
+}
+
+// ---- Instants, offsets, wall-clock parts ----
+const isOffsetName = name => /^UTC[+-]/.test(name);
+
+function offsetMs(name) {
+  const m = name.match(/^UTC([+-])(\d{1,2}):?([0-5]\d)?$/);
+  if (!m) return 0;
+  return (m[1] === '-' ? -1 : 1) * ((+m[2]) * 60 + (m[3] ? +m[3] : 0)) * 60000;
+}
+
+const wallFmtCache = new Map();
+function getWallFmt(zone) {
+  let f = wallFmtCache.get(zone);
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-GB', {
+      timeZone: zone, hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      weekday: 'short'
+    });
+    wallFmtCache.set(zone, f);
+  }
+  return f;
+}
+
+// Local calendar fields of `ms` in `zone`.
+function wallInfo(ms, zone) {
+  if (isOffsetName(zone)) {
+    const d = new Date(ms + offsetMs(zone));
+    return {
+      y: d.getUTCFullYear(), moIdx: d.getUTCMonth(), d: d.getUTCDate(),
+      h: d.getUTCHours(), mi: d.getUTCMinutes(), s: d.getUTCSeconds(),
+      wd: WD[d.getUTCDay()], mon: MON[d.getUTCMonth()]
+    };
+  }
+  const p = {};
+  getWallFmt(zone).formatToParts(new Date(ms)).forEach(x => { p[x.type] = x.value; });
+  // Month is read as a numeric part and mapped through the app's own table —
+  // never looked up by its localised name (ICU/CLDR spellings drift; modern
+  // ICU writes "Sept", which a name lookup would fail to find and corrupt
+  // every September date).
+  const moIdx = (+p.month) - 1;
+  return {
+    y: +p.year, moIdx, d: +p.day,
+    h: (+p.hour) % 24, mi: +p.minute, s: +p.second,
+    wd: p.weekday, mon: MON[moIdx]
+  };
+}
+
+// UTC offset of an IANA zone at `ms`, in minutes (DST-aware).
+function ianaOffsetMinutes(zone, ms) {
+  const p = {};
+  getWallFmt(zone).formatToParts(new Date(ms)).forEach(x => { p[x.type] = x.value; });
+  const utc = Date.UTC(+p.year, (+p.month) - 1, +p.day, (+p.hour) % 24, +p.minute, +p.second);
+  return Math.round((utc - ms) / 60000);
+}
+
+// A zone's UTC offset in minutes at `ms`, DST-aware. IANA zones are read off
+// the platform tzdata; fixed-offset names and UTC are constants.
+function zoneOffsetMin(name, now) {
+  if (isOffsetName(name)) return offsetMs(name) / 60000;
+  if (name === 'UTC') return 0;
+  return ianaOffsetMinutes(name, now);
+}
+
+// Is the zone in daylight saving at `ms`? Fixed offsets and UTC never are.
+// The platform never says "DST" explicitly, so it's answered offset-based:
+// DST moves the clock *forward*, so the in-DST offset is the LARGER of the
+// zone's two seasonal offsets, and the standard (non-DST) offset is the
+// MINIMUM of the zone's offsets across the year. Sample the offset at twelve
+// points a year apart-month (30-day steps) and take the minimum: every
+// current tzdb zone spends > 35 days per year in standard time, so at least
+// one sample always lands in standard and the minimum is exactly the standard
+// offset. (A single probe ~6 months away is NOT enough: the DST regime
+// recurs every 365 days, so for zones whose DST span exceeds half a year —
+// e.g. London, ~220 days — both seasonal probes can land inside DST.)
+function zoneInDST(name, ms) {
+  if (name === 'UTC' || isOffsetName(name)) return false;
+  const o = ianaOffsetMinutes(name, ms);
+  let min = o;
+  for (let k = 1; k < 12; k++) {
+    const v = ianaOffsetMinutes(name, ms + k * 30 * 864e5);
+    if (v < min) min = v;
+  }
+  return o > min;
+}
+
+// Wall-clock date+time in `zone` → absolute instant (ms).
+// 2-pass fixed-point: converges across DST boundaries.
+function wallToInstant(w, zone) {
+  if (isOffsetName(zone)) {
+    return Date.UTC(w.y, w.moIdx, w.d, w.h, w.mi || 0) - offsetMs(zone);
+  }
+  const t0 = Date.UTC(w.y, w.moIdx, w.d, w.h, w.mi || 0);
+  const o0 = ianaOffsetMinutes(zone, t0);
+  let t = t0 - o0 * 60000;
+  const o1 = ianaOffsetMinutes(zone, t);
+  if (o1 !== o0) t = t0 - o1 * 60000;
+  return t;
+}
+
+// ---- Display formatting ----
+const pad = n => String(n).padStart(2, '0');
+
+// Hours:minutes only — no seconds anywhere in the display (and, with no
+// seconds shown, nothing on the page changes mid-minute — see armTick).
+function fmtClock(h, mi, h12) {
+  if (!h12) return `${pad(h)}:${pad(mi)}`;
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  return `${hh}:${pad(mi)} ${ampm}`;
+}
+
+// Always renders UTC±HH:MM — including UTC+00:00 for zero, so the chip never
+// repeats the "UTC" zone name shown in the name chip next to it.
+function fmtOffsetLabel(min) {
+  const sign = min < 0 ? '-' : '+';
+  const a = Math.abs(min);
+  return `UTC${sign}${pad(Math.floor(a / 60))}:${pad(a % 60)}`;
+}
+
+// Offset of a card relative to the base, signed h:mm (+ = ahead of base).
+function fmtRelDiff(min) {
+  const sign = min < 0 ? '−' : '+';
+  const a = Math.abs(min);
+  return `${sign}${Math.floor(a / 60)}:${pad(a % 60)}`;
+}
+
+// The Time field's text follows the 12/24h setting ("14:30" ↔ "2:30 PM").
+function fmtTimeIn(hhmm, h12) {
+  const [h, mi] = hhmm.split(':').map(Number);
+  if (!h12) return `${pad(h)}:${pad(mi)}`;
+  const hh = h % 12 === 0 ? 12 : h % 12;
+  return `${hh}:${pad(mi)} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
+// Tolerant parse of the Time field: "14:30", "2:30 PM", "12:30am", "1430",
+// "02:30:15" (seconds dropped). Returns canonical 24h "HH:MM" or null.
+function parseTimeIn(text) {
+  const t = String(text).trim().toUpperCase().replace(/\s+/g, ' ');
+  const m = t.match(/^(\d{1,2}):?(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/);
+  if (!m) return null;
+  let h = +m[1];
+  const mi = +m[2];
+  if (h > 23 || mi > 59) return null;
+  if (m[4] === 'PM' && h < 12) h += 12;
+  else if (m[4] === 'AM' && h === 12) h = 0;
+  return `${pad(h)}:${pad(mi)}`;
+}
+
+// Parse a typed date: "YYYY-MM-DD" (also accepts "/" separators and
+// unpadded month/day). Returns the canonical YYYY-MM-DD, or null when the
+// text is not a real calendar date (2026-02-30, 2026-13-01, …).
+function parseYmd(raw) {
+  const m = String(raw).trim().match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (!m) return null;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  return `${y}-${pad(mo)}-${pad(d)}`;
+}
+
+/* ============================================================
+   State & persistence
+   ============================================================ */
+const LS_KEY = 'timezones.app.v1';
+
+function localDefaultBase() {
+  let z = 'UTC';
+  try { z = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) {}
+  if (!zoneExists(z)) z = 'UTC';
+  const c = CITY_BY_ZONE.get(z.toLowerCase());
+  return c ? makeCityZone(c) : makePlainZone(z);
+}
+
+const toYmd = w => `${w.y}-${pad(w.moIdx + 1)}-${pad(w.d)}`;
+const wallNow = zone => wallInfo(Date.now(), zone);
+
+function makeState(seed) {
+  const base = localDefaultBase();
+  const w = wallNow(base.name);
+  return {
+    base,
+    // seed a few popular cities, skipping one that would duplicate the base
+    zones: seed
+      ? POPULAR.slice(0, 4).map(byCity).filter(z => z && keyOf(z) !== keyOf(base))
+      : [],
+    date: toYmd(w),
+    time: `${pad(w.h)}:${pad(w.mi)}`,
+    h12: false,
+    theme: 'auto'
+  };
+}
+
+// Rebuild a persisted location. `name` drives the time math; `label`/
+// `country` drive its identity, so two cities sharing a zone (Mumbai and
+// New Delhi) survive a reload as two distinct cards. A hand-edited save or an
+// imported file can carry a zone this browser's tzdata doesn't know — a card
+// on such a zone would throw in Intl, so it is dropped (null) instead.
+// Fixed offsets (`UTC±HH:MM`) skip the check: the engine never passes them
+// to Intl, so they are valid by construction.
+function rebuildZone(o) {
+  if (!o || typeof o.name !== 'string' || (!isOffsetName(o.name) && !zoneExists(o.name))) return null;
+  const label = o.label || (o.kind === 'offset' ? o.name : zoneDisplay(o.name));
+  const country = o.country || null;
+  const display = country ? `${label}, ${country}` : label;
+  return { kind: o.kind || 'zone', name: o.name, label, country, display, inputText: display };
+}
+// Saved zones carry their place identity when present; older saves carry
+// only the name and fall back to the normal normalizer.
+const rebuildSaved = z => z && (z.label ? rebuildZone(z) : normalizeZone(z.name));
+
+// Rebuild a full state from a parsed save object. Shared by loadState() (the
+// localStorage save) and the import path (a JSON backup file), so both
+// validate identically: an invalid base falls back to the local zone, unknown
+// zones are dropped, duplicates collapse by place, and missing date/time/h12/
+// theme take the same first-run-style defaults. Returns null for a parsed
+// value that is not a save at all (a number, string, array, …).
+function stateFromSave(s) {
+  if (!s || typeof s !== 'object' || Array.isArray(s)) return null;
+  const base = (s.base && rebuildSaved(s.base)) || localDefaultBase();
+  const w = wallNow(base.name);
+  const zones = (Array.isArray(s.zones) ? s.zones : [])
+    .map(rebuildSaved).filter(Boolean);
+  const seen = new Set();
+  const out = [];
+  for (const z of zones) {
+    const k = keyOf(z);
+    if (!seen.has(k)) { seen.add(k); out.push(z); }
+  }
+  return {
+    base,
+    zones: out,
+    date: /^\d{4}-\d{2}-\d{2}$/.test(s.date || '') ? s.date : toYmd(w),
+    time: /^\d{1,2}:\d{2}/.test(s.time || '') ? (s.time.length > 5 ? s.time.slice(0, 5) : s.time) : `${pad(w.h)}:${pad(w.mi)}`,
+    // The 12/24h choice: the localStorage save spells it `h12` (true =
+    // 12-hour display); the export file spells it `24hour` (true =
+    // 24-hour display). Accept either; both present (a hand-edited file)
+    // -> `h12` wins; neither -> 24-hour (the default).
+    h12: s.h12 !== undefined ? !!s.h12 : s['24hour'] !== undefined ? !s['24hour'] : false,
+    // missing/unknown (incl. older saves) -> auto: follow the system
+    theme: (s.theme === 'dark' || s.theme === 'light') ? s.theme : 'auto'
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return stateFromSave(JSON.parse(raw));
+  } catch (e) {
+    return null;
+  }
+}
+
+// The on-disk shape of a location (the export file carries the same one).
+const zoneSave = z => ({ name: z.name, label: z.label, country: z.country || null, kind: z.kind });
+
+// The full save: base + zones (screen order) + date/time + h12 + theme.
+function currentSave() {
+  return {
+    base: zoneSave(state.base),
+    zones: state.zones.map(zoneSave),
+    date: state.date, time: state.time, h12: state.h12, theme: state.theme
+  };
+}
+
+let state;
+function saveState() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(currentSave()));
+  } catch (e) { /* private mode — non-fatal */ }
+}
+
+// Export file: the full save with a version marker (written for the future,
+// never required on import) — pretty-printed, so a user can eyeball their
+// backup. The `zones` list order is the on-screen card order. The `time` is
+// the canonical 24-hour value, and the 12/24h display choice is carried as a
+// `24hour` flag (true = 24-hour display) — the inverse of the internal `h12`
+// state, which is what the localStorage save still spells.
+function buildExport() {
+  const { h12, ...save } = currentSave();
+  return JSON.stringify({ version: 1, ...save, '24hour': !h12 }, null, 2);
+}
+
+/* ============================================================
+   Rendering
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const baseCardSlot = $('#baseCardSlot');
+const grid = $('#grid');
+const emptyEl = $('#empty');
+const quickEl = $('#quick');
+const dateIn = $('#dateIn');
+const datePick = $('#datePick'); // invisible native twin of dateIn — the picker engine
+const calBtn = $('#calBtn');
+const timeIn = $('#timeIn');
+const nowBtn = $('#nowBtn');
+const fmtSeg = $('#fmtSeg');
+const resetBtn = $('#resetBtn');
+const addBtn = $('#addBtn');
+const themeBtn = $('#themeBtn');
+
+// Write the selected date to the visible text field and its invisible native
+// twin, so the calendar picker always re-opens on the current date.
+function setSelDate(v) { dateIn.value = v; if (datePick) datePick.value = v; }
+
+// The user's OS/browser dark-mode preference. 'auto' (the default choice)
+// follows it; explicit dark/light choices never do. Null where matchMedia
+// is unavailable (e.g. the unit-test harness); auto then resolves to dark.
+let systemMQ = null;
+try { systemMQ = matchMedia('(prefers-color-scheme: dark)'); } catch (e) {}
+
+// auto -> the system preference (dark when it is unknowable — matching the
+// pre-paint script in <head>); otherwise the stored choice as-is.
+function resolvedTheme() {
+  return state.theme === 'auto'
+    ? (systemMQ ? (systemMQ.matches ? 'dark' : 'light') : 'dark')
+    : state.theme;
+}
+
+// Reflect the *resolved* theme: <html> carries data-theme (the token blocks
+// key off it) and the toggle button reports the switch it would make.
+function applyTheme() {
+  const t = resolvedTheme();
+  document.documentElement.dataset.theme = t;
+  const light = t === 'light';
+  themeBtn.setAttribute('aria-pressed', light ? 'true' : 'false');
+  const label = light ? 'Switch to dark mode' : 'Switch to light mode';
+  themeBtn.setAttribute('aria-label', label);
+  themeBtn.title = label;
+}
+
+let baseCardEl = null;
+const cardEls = new Map(); // zone *object* → card element (grid only; two same-zone cards are distinct objects)
+
+function buildCard(z, isBase) {
+  const el = document.createElement('article');
+  el.className = 'card' + (isBase ? ' base' : '');
+  el.dataset.name = z.name;
+  el._zone = z; // stable element → location link (names are not unique: two cities can share a zone)
+  el.innerHTML = `
+    <div class="card-top">
+      <div class="loc">
+        <span class="city">${esc(z.label)}</span>
+        ${z.country ? `<span class="coun">${esc(z.country)}</span>` : ''}
+      </div>
+      ${isBase
+        ? '<span class="chip badge">Base</span>'
+        : `<span class="top-actions">
+             <span class="grip" title="Drag to reorder" aria-hidden="true">⠿</span>
+             <button class="rm" type="button" title="Remove ${esc(z.label)}" aria-label="Remove ${esc(z.label)}">×</button>
+           </span>`}
+    </div>
+    <div class="chips">
+      ${z.kind === 'zone' ? `<span class="chip zname">${esc(z.name)}</span>` : ''}
+      <span class="chip zoff"></span>
+      ${isBase ? '' : '<span class="chip zrel hidden" title="Offset relative to the base timezone"></span>'}
+    </div>
+    ${isBase
+      ? `<div class="base-cols">
+           <div class="live" role="timer" aria-label="Current time in ${esc(z.display)}">
+             <div class="clock"></div>
+             <div class="cdate"><span class="cdate-t"></span><span class="dstbadge hidden" title="Daylight saving time in effect">DST</span></div>
+           </div>
+           <div class="conv-side">
+             <div class="conv-label"></div>
+             <div class="conv">
+               <span class="conv-time"></span>
+               <span class="conv-date"></span>
+               <span class="daybadge hidden"></span>
+               <span class="dstbadge hidden" title="Daylight saving time in effect">DST</span>
+             </div>
+           </div>
+         </div>`
+      : `<div class="live" role="timer" aria-label="Current time in ${esc(z.display)}">
+           <div class="clock"></div>
+           <div class="cdate"><span class="cdate-t"></span><span class="dstbadge hidden" title="Daylight saving time in effect">DST</span></div>
+         </div>
+         <div class="sep"></div>
+         <div class="conv-label"></div>
+         <div class="conv">
+           <span class="conv-time"></span>
+           <span class="conv-date"></span>
+           <span class="daybadge hidden"></span>
+           <span class="dstbadge hidden" title="Daylight saving time in effect">DST</span>
+         </div>`}`;
+  if (!isBase) {
+    el.querySelector('.rm').addEventListener('click', () => removeZone(z));
+    el.draggable = true;
+    el.addEventListener('dragstart', e => {
+      if (e.target.closest && e.target.closest('.rm')) { e.preventDefault(); return; } // × is for clicking, not dragging
+      dragEl = el;
+      dragSnapshot = Array.from(grid.children);
+      dropCommitted = false;
+      try {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', z.display);
+      } catch (_) { /* non-DnD hosts */ }
+      // Re-inserting an element restarts its CSS animations — suppress the
+      // entrance fade for good, or every reflow would flash the card.
+      el.style.animation = 'none';
+      el.classList.add('dragging');
+      document.body.classList.add('tz-dragging');
+    });
+    el.addEventListener('dragend', () => endDrag(el));
+  }
+  return el;
+}
+
+// `baseMin` (minutes, optional) is the base zone's current offset, passed in
+// by tick() so the base isn't re-formatted once per card.
+function updateLive(el, z, baseMin) {
+  const now = Date.now();
+  const w = wallInfo(now, z.name);
+  el.querySelector('.clock').textContent = fmtClock(w.h, w.mi, state.h12);
+  el.querySelector('.cdate-t').textContent = `${w.wd}, ${w.mon} ${w.d}, ${w.y}`;
+  // DST indicator for the displayed date line (fixed offsets / UTC never;
+  // flips on the tick when the zone crosses a transition).
+  const dst = el.querySelector('.live .dstbadge');
+  if (dst) dst.classList.toggle('hidden', !zoneInDST(z.name, now));
+  const chip = el.querySelector('.zoff');
+  // The current UTC offset only — no tz abbreviation (ICU's "short" name
+  // degrades to "GMT±x" for many zones, e.g. Sydney → "GMT+10").
+  chip.textContent = isOffsetName(z.name) ? 'fixed · no DST' : fmtOffsetLabel(zoneOffsetMin(z.name, now));
+  // Relative to the base (grid cards only): how far the card sits ahead of /
+  // behind the base at this instant, DST-aware on both sides. Hidden when the
+  // base's current offset is zero (a UTC base): the difference would just
+  // duplicate the UTC chip above.
+  const rel = el.querySelector('.zrel');
+  if (rel) {
+    const b = baseMin === undefined ? zoneOffsetMin(state.base.name, now) : baseMin;
+    if (b === 0) { rel.classList.add('hidden'); return; }
+    rel.classList.remove('hidden');
+    const baseName = `${state.base.label}${state.base.country ? ', ' + state.base.country : ''}`;
+    rel.textContent = `${baseName} ${fmtRelDiff(zoneOffsetMin(z.name, now) - b)}`;
+  }
+}
+
+function selectedWall() {
+  const [y, mo, d] = state.date.split('-').map(Number);
+  const [h, mi] = state.time.split(':').map(Number);
+  return { y, moIdx: mo - 1, d, h, mi };
+}
+function selectedInstant() {
+  return wallToInstant(selectedWall(), state.base.name);
+}
+
+function updateConv(el, z) {
+  const sel = selectedInstant();
+  const bw = wallInfo(sel, state.base.name);
+  const isBase = z === state.base;
+  const sw = selectedWall();
+  const w = isBase
+    ? { ...sw, wd: WD[new Date(Date.UTC(sw.y, sw.moIdx, sw.d)).getUTCDay()], mon: MON[sw.moIdx] }
+    : wallInfo(sel, z.name);
+  el.querySelector('.conv-label').textContent = isBase
+    ? 'Selected time'
+    : `When it's ${fmtClock(bw.h, bw.mi, state.h12)} in ${state.base.display}`;
+  el.querySelector('.conv-time').textContent = fmtClock(w.h, w.mi, state.h12);
+  el.querySelector('.conv-date').textContent = `${w.wd}, ${w.mon} ${w.d}${w.y !== bw.y ? ', ' + w.y : ''}`;
+  const badge = el.querySelector('.daybadge');
+  // DST indicator for the converted date (both base and grid cards).
+  const dst = el.querySelector('.conv .dstbadge');
+  if (dst) dst.classList.toggle('hidden', !zoneInDST(z.name, sel));
+  if (isBase) { badge.classList.add('hidden'); return; }
+  const delta = Math.round((Date.UTC(w.y, w.moIdx, w.d) - Date.UTC(bw.y, bw.moIdx, bw.d)) / 864e5);
+  if (delta === 0) {
+    badge.classList.add('hidden');
+  } else {
+    badge.classList.remove('hidden');
+    badge.textContent = delta > 0 ? `+${delta} day${Math.abs(delta) > 1 ? 's' : ''}`
+                                   : `−${-delta} day${Math.abs(delta) > 1 ? 's' : ''}`;
+  }
+}
+
+function renderBase() {
+  baseComboApi.setDisplay(state.base.display);
+  setSelDate(state.date);
+  timeIn.value = fmtTimeIn(state.time, state.h12);
+  timeIn.placeholder = state.h12 ? '2:30 PM' : '14:30';
+  fmtSeg.querySelectorAll('button').forEach(b => {
+    const on = b.dataset.fmt === (state.h12 ? '12' : '24');
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  const card = buildCard(state.base, true);
+  baseCardSlot.replaceChildren(card);
+  baseCardEl = card;
+  updateLive(card, state.base);
+  updateConv(card, state.base);
+}
+
+function renderQuick() {
+  quickEl.replaceChildren();
+  const keys = new Set([keyOf(state.base), ...state.zones.map(keyOf)]);
+  for (const name of QUICK) {
+    const c = byCity(name);
+    if (!c || keys.has(keyOf(c))) continue;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chipbtn';
+    b.textContent = c.display;
+    b.addEventListener('click', () => addZone(c));
+    quickEl.appendChild(b);
+  }
+}
+
+function renderGrid() {
+  grid.replaceChildren();
+  cardEls.clear();
+  if (!state.zones.length) {
+    emptyEl.classList.remove('hidden');
+    renderQuick();
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  const baseMin = zoneOffsetMin(state.base.name, Date.now());
+  state.zones.forEach((z, i) => {
+    const c = buildCard(z, false);
+    c.style.animationDelay = `${Math.min(i, 8) * 35}ms`;
+    grid.appendChild(c);
+    cardEls.set(z, c);
+    updateLive(c, z, baseMin);
+    updateConv(c, z);
+  });
+}
+
+function updateConvs() {
+  if (baseCardEl) updateConv(baseCardEl, state.base);
+  for (const z of state.zones) {
+    const el = cardEls.get(z);
+    if (el) updateConv(el, z);
+  }
+}
+
+function tick() {
+  const now = Date.now();
+  if (baseCardEl) updateLive(baseCardEl, state.base);
+  const baseMin = zoneOffsetMin(state.base.name, now);
+  for (const z of state.zones) {
+    const el = cardEls.get(z);
+    if (el) updateLive(el, z, baseMin);
+  }
+}
+
+// Next absolute minute boundary (ms), strictly after `t`. Every zone's UTC
+// offset is a whole number of minutes, so every zone's local minute boundary
+// — and every DST transition — coincides with these absolute boundaries.
+function nextMinuteBoundary(t) {
+  return Math.ceil((t + 1) / 60000) * 60000;
+}
+
+// With no seconds on the display, nothing on the page can change mid-minute,
+// so the live render happens once per minute, exactly at the boundary — 60×
+// less work than ticking every second. The pending timer also self-corrects
+// after a system-clock change or a wake from suspend: it fires on resume,
+// renders the current minute, and re-arms.
+let tickTimer = null;
+function armTick(run = tick) {
+  if (tickTimer) clearTimeout(tickTimer);
+  const t = Date.now();
+  const boundary = nextMinuteBoundary(t);
+  tickTimer = setTimeout(() => {
+    tickTimer = null;
+    if (Date.now() < boundary) { armTick(run); return; } // rare early fire
+    run();
+    armTick(run);
+  }, boundary - t);
+}
+
+function renderAll() {
+  renderBase();
+  renderGrid();
+  updateConvs();
+  tick();
+  saveState();
+}
+
+/* ============================================================
+   Reorder (HTML5 drag & drop)
+   The dragged card is never taken out of the grid — the browser
+   drag image is just a snapshot — so the layout can never overlap
+   or drift: the other cards reflow into the freed cell and the new
+   DOM order is what the grid renders.
+   ============================================================ */
+let dragEl = null;         // card element currently being dragged
+let dragSnapshot = null;   // grid children at dragstart (to restore on a cancelled drop)
+let dropCommitted = false;
+const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)');
+
+// Place the dragged card before/after `target` (decided by which side of
+// the target the pointer is on), animating the cards whose cells move.
+function dragReflow(e, target) {
+  const r = target.getBoundingClientRect();
+  const inRow = e.clientX > r.left && e.clientX < r.right;
+  const after = inRow ? e.clientX > r.left + r.width / 2 : e.clientY > r.top + r.height / 2;
+  // Already where it would land → nothing to do.
+  if (after ? target.nextElementSibling === dragEl : target.previousElementSibling === dragEl) return;
+  const before = new Map();
+  for (const c of grid.children) if (c !== dragEl) before.set(c, c.getBoundingClientRect());
+  if (after) grid.insertBefore(dragEl, target.nextElementSibling);
+  else grid.insertBefore(dragEl, target);
+  if (reduceMotion.matches) return;
+  const movers = [];
+  for (const [c, r0] of before) {
+    const r1 = c.getBoundingClientRect();
+    const dx = r0.left - r1.left, dy = r0.top - r1.top;
+    if (Math.abs(dx) > .5 || Math.abs(dy) > .5) movers.push([c, dx, dy]);
+  }
+  if (!movers.length) return;
+  for (const [c, dx, dy] of movers) {
+    c.style.transition = 'none';
+    c.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+  void grid.offsetWidth; // flush, then release: cards glide to their new cells
+  for (const [c] of movers) {
+    c.style.transition = ''; // back to the stylesheet's .16s transform transition
+    c.style.transform = '';
+  }
+}
+
+// Read the grid's current DOM order back into state (and persist it).
+function syncGridOrder() {
+  const zones = Array.from(grid.children).map(c => c._zone).filter(Boolean);
+  if (zones.length !== state.zones.length) return; // grid was re-rendered mid-drag
+  if (zones.every((z, i) => z === state.zones[i])) return;
+  state.zones = zones;
+  saveState();
+}
+
+function endDrag(el) {
+  if (dragEl !== el) return;
+  dragEl = null;
+  el.classList.remove('dragging');
+  document.body.classList.remove('tz-dragging');
+  if (!dropCommitted && dragSnapshot) {
+    // Dropped outside the grid → cancel: restore the pre-drag order.
+    for (const c of dragSnapshot) if (grid.contains(c)) grid.appendChild(c);
+  }
+  dragSnapshot = null;
+  syncGridOrder();
+}
+
+grid.addEventListener('dragover', e => {
+  if (!dragEl) return;
+  e.preventDefault(); // accept the drop
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  const t = e.target.closest ? e.target.closest('.card') : null;
+  if (!t || t === dragEl || t.classList.contains('base')) return;
+  dragReflow(e, t);
+});
+grid.addEventListener('drop', e => {
+  if (!dragEl) return;
+  e.preventDefault();
+  dropCommitted = true;
+});
+
+/* ============================================================
+   Combobox component
+   ============================================================ */
+function makeCombo(root, opts) {
+  const input = root.querySelector('input');
+  const dd = root.querySelector('.dd');
+  let items = [], sel = -1, open = false;
+
+  function render() {
+    if (!open) return;
+    if (!items.length) {
+      dd.innerHTML = `<div class="item none">${esc(opts.noMatch || 'No match — try a city like "Tokyo", a zone like "America/Chicago", or "UTC+5:30"')}</div>`;
+    } else {
+      dd.innerHTML = items.map((it, i) =>
+        `<div class="item${i === sel ? ' sel' : ''}" data-i="${i}">
+          <span class="il">${esc(it.label)}${it.country ? ` <span class="ic">· ${esc(it.country)}</span>` : ''}</span>
+          <span class="ih">${esc(it.hint || '')}</span>
+        </div>`).join('');
+    }
+  }
+
+  function refresh() {
+    items = opts.search(input.value);
+    sel = items.length ? 0 : -1;
+    if (!input.value.trim() && !items.length) { setOpen(false); return; }
+    setOpen(true); // open first, so render() never repaints stale items
+    render();
+  }
+
+  function setOpen(v) { open = v; dd.classList.toggle('hidden', !v); }
+
+  function pick(z) {
+    setOpen(false);
+    const rejected = opts.onSelect(z);
+    if (rejected === false) {
+      input.value = z.inputText;
+      input.classList.add('err');
+      setTimeout(() => input.classList.remove('err'), 1200);
+    } else {
+      input.value = opts.keepAfterPick ? z.inputText : '';
+    }
+    return rejected;
+  }
+
+  input.addEventListener('input', () => {
+    input.classList.remove('err');
+    sel = -1;
+    refresh();
+    setOpen(true);
+  });
+  input.addEventListener('focus', () => { refresh(); setOpen(true); input.select(); });
+  input.addEventListener('blur', () => setTimeout(() => setOpen(false), 120));
+
+  dd.addEventListener('mousedown', e => {
+    const it = e.target.closest('.item[data-i]');
+    if (!it) return;
+    e.preventDefault();
+    const z = items[+it.dataset.i];
+    if (z) pick(z);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!items.length) return;
+      sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      render();
+      const s = dd.querySelector('.item.sel');
+      if (s) s.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (open && sel >= 0 && items[sel]) pick(items[sel]);
+      else {
+        const z = normalizeZone(input.value);
+        if (z) pick(z);
+        else setOpen(false);
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+      input.blur();
+    }
+  });
+
+  return {
+    setDisplay(text) { input.value = text; },
+    focus() { input.focus(); },
+    rawPick() {
+      // A highlighted suggestion wins over the raw text (typing "mum" and
+      // hitting Add picks the suggested city, not a failed parse of "mum").
+      if (open && sel >= 0 && items[sel]) return pick(items[sel]) !== false;
+      const z = normalizeZone(input.value);
+      if (z) pick(z);
+      return !!z;
+    }
+  };
+}
+
+// Search index over every tzdb name: canonical zones + backward-compat
+// links, validated once against this browser's own tzdata (older browsers
+// silently lose names their tzdata doesn't know). Zero-offset spellings
+// (UTC, GMT, Z, Greenwich, Etc/GMT…) are left out: parseOffset() already
+// canonicalizes them to the single UTC zone, so suggesting them would only
+// produce duplicate-time entries.
+let tzdbIdx;
+function tzdbIndex() {
+  if (!tzdbIdx) {
+    const zero = n => /^(etc\/)?(utc|gmt([+-]?0)?|uct|universal|zulu|z|greenwich)$/i.test(n);
+    const idx = [];
+    const seenN = new Set();
+    for (const z of TZDB_CANON) {
+      if (zero(z) || seenN.has(z.toLowerCase()) || !zoneExists(z)) continue;
+      seenN.add(z.toLowerCase());
+      idx.push(tzdbEntry(z, null));
+    }
+    for (const [n, t] of TZDB_LINKS) {
+      if (zero(n) || seenN.has(n.toLowerCase()) || !zoneExists(n)) continue;
+      seenN.add(n.toLowerCase());
+      idx.push(tzdbEntry(n, t));
+    }
+    tzdbIdx = idx;
+  }
+  return tzdbIdx;
+}
+function tzdbEntry(name, target) {
+  const lc = name.toLowerCase();
+  const base = name.split('/').pop().toLowerCase();
+  const codes = TZDB_ZONE_COUNTRY[lc]
+    || (target ? TZDB_ZONE_COUNTRY[target.toLowerCase()] : null) || [];
+  const cQ = codes.map(c => COUNTRY_NAMES[c] || '').join(' ').toLowerCase();
+  // Country words without punctuation, for word-prefix matching: "utc"
+  // must not match "St Maarten (Dutch)" via the letters in "dutch".
+  const cQw = cQ.split(/\s+/).map(w => w.replace(/[^a-z]/g, '')).filter(Boolean);
+  return { name, target: target || null, lc, etc: /^etc\//i.test(name),
+    q: lc.replace(/[_\s-]/g, ''), baseQ: base.replace(/[_\s-]/g, ''), cQ, cQw };
+}
+
+// Search over the bundled dataset + every tzdb zone name + offsets.
+function searchZones(q, { current, exclude, emptyList, baseKey }) {
+  const s = q.trim().toLowerCase();
+  // Comma-separated country ("Mumbai, India") is ignored for name matching.
+  const sCity = s.split(',')[0].trim();
+  const qn = s.replace(/[_\s,-]/g, '');
+  const out = [];
+  const seen = new Set();
+  const suppressed = [];
+  const push = (z, hint) => {
+    const k = keyOf(z);
+    if (seen.has(k)) return;
+    seen.add(k);
+    if (exclude && exclude.has(k)) {
+      if (suppressed.length < 4) suppressed.push(z);
+      return;
+    }
+    out.push({ ...z, hint });
+  };
+  if (!s) {
+    if (current) push(current, 'base');
+    for (const c of emptyList) {
+      const z = byCity(c);
+      if (z) push(z, 'popular');
+    }
+    return out;
+  }
+  // 1. Fixed offsets ("+05:30", "UTC+5", …)
+  const off = parseOffset(q);
+  if (off) push(makeOffsetZone(off), off === '+00:00' ? 'no DST' : 'fixed offset');
+  // 2. Curated cities
+  const matches = CITIES.filter(([name, country, zone]) =>
+    name.toLowerCase().includes(sCity) || country.toLowerCase().includes(s) || zone.toLowerCase().includes(s)
+  );
+  matches.sort((a, b) => rank(a) - rank(b));
+  for (const c of matches) {
+    if (out.length >= 6) break;
+    push(makeCityZone(c), c[2]);
+  }
+  function rank(c) {
+    const name = c[0].toLowerCase();
+    if (name.startsWith(sCity)) return 0;
+    if (name.includes(sCity)) return 1;
+    return 2;
+  }
+  // 3. Every tzdb zone name + link, matched on the full name or its
+  //    base part ("mumbai" → curated row, "kolkata" → Asia/Kolkata,
+  //    "new york" → America/New_York, "france" → Europe/Paris).
+  if (qn.length >= 3) {
+    const cand = [];
+    for (const e of tzdbIndex()) {
+      // Etc/* are legacy fixed-offset names: suggest only on exact match,
+      // so a "gmt" query doesn't fill the list with UTC±x variants.
+      let r;
+      if (e.lc === s || e.baseQ === qn) r = 0;
+      else if (!e.etc && (e.lc.startsWith(s) || e.baseQ.startsWith(qn))) r = 1;
+      else if (!e.etc && (e.q.includes(qn) || e.baseQ.includes(qn) || e.cQw.some(w => w.startsWith(qn)))) r = 2;
+      else continue;
+      cand.push([r, e]);
+    }
+    cand.sort((a, b) => a[0] - b[0] || a[1].name.localeCompare(b[1].name));
+    let n = 0;
+    for (const [r, e] of cand) {
+      if (n >= 6) break;
+      n++;
+      const cc = CITY_BY_ZONE.get(e.lc);
+      // Prefer the curated city row when the query is really about that
+      // city; otherwise show the zone's own name, so "kolkata" suggests
+      // "Kolkata" rather than the same zone's "Mumbai" row.
+      const cn = cc ? cc[0].toLowerCase() : '';
+      const namey = cn !== '' && (cn.startsWith(qn) || qn.startsWith(cn));
+      const z = (cc && namey) ? makeCityZone(cc) : makeZoneEntry(e.name, e.target);
+      if (seen.has(keyOf(z))) continue;
+      push(z, namey ? 'city' : z.country || (z.ianaTarget ? `→ ${z.ianaTarget}` : 'IANA zone'));
+    }
+  }
+  // 4. Never leave an empty dropdown: when every match is already
+  //    displayed, re-show those matches marked as such. When the dropdown
+  //    does have results, the base is still re-shown (marked) so picking it
+  //    gives feedback instead of silently vanishing; other duplicates stay
+  //    hidden — they're visible as cards, and picking one is rejected.
+  if (s && suppressed.length) {
+    const bk = baseKey || (current ? keyOf(current) : null);
+    for (const z of suppressed) {
+      if (!out.length || keyOf(z) === bk)
+        out.push({ ...z, hint: keyOf(z) === bk ? 'it’s your base' : 'already added' });
+    }
+  }
+  return out;
+}
+
+function existingKeys() {
+  return new Set([keyOf(state.base), ...state.zones.map(keyOf)]);
+}
+
+/* ============================================================
+   Actions
+   ============================================================ */
+let baseComboApi, addComboApi;
+
+function addZone(z) {
+  if (!z) return;
+  if (existingKeys().has(keyOf(z))) return false;
+  state.zones.push(z);
+  renderGrid();
+  saveState();
+  return true;
+}
+
+// By object identity, not name: two cards in the same zone (Mumbai and
+// New Delhi, both Asia/Kolkata) must each remove only themselves.
+function removeZone(z) {
+  state.zones = state.zones.filter(x => x !== z);
+  renderGrid();
+  saveState();
+}
+
+/* ============================================================
+   Wire up
+   ============================================================ */
+baseComboApi = makeCombo($('#baseCombo'), {
+  keepAfterPick: true,
+  search: q => searchZones(q, { current: state.base, exclude: new Set(state.zones.map(keyOf)), emptyList: POPULAR, baseKey: keyOf(state.base) }),
+  onSelect: z => {
+    if (keyOf(z) === keyOf(state.base)) return true;
+    state.base = z;
+    renderAll();
+    return true;
+  }
+});
+
+addComboApi = makeCombo($('#addCombo'), {
+  keepAfterPick: false,
+  search: q => searchZones(q, { current: null, exclude: existingKeys(), emptyList: POPULAR, baseKey: keyOf(state.base) }),
+  onSelect: z => addZone(z)
+});
+
+dateIn.addEventListener('input', () => dateIn.classList.remove('err'));
+dateIn.addEventListener('change', () => {
+  const d = parseYmd(dateIn.value);
+  if (!d) {
+    setSelDate(state.date); // revert
+    dateIn.classList.add('err');
+    setTimeout(() => dateIn.classList.remove('err'), 1200);
+    return;
+  }
+  setSelDate(d); // normalise to canonical YYYY-MM-DD
+  if (d !== state.date) { state.date = d; updateConvs(); saveState(); }
+});
+
+// The date *picker*: the visible field stays plain text in fixed YYYY-MM-DD
+// format (a visible <input type="date"> would render in the OS locale's format).
+// The calendar lives in the invisible datePick twin — the icon opens the
+// browser's own calendar via showPicker(), and whatever is picked is written
+// back into the text field as canonical YYYY-MM-DD and committed exactly like
+// typed input. Browsers without showPicker() keep plain text entry.
+function openDatePicker() {
+  if (!datePick || typeof datePick.showPicker !== 'function') return; // no picker support: plain text entry
+  const v = parseYmd(dateIn.value) || state.date; // open on the current (or last good) date
+  if (v) datePick.value = v;
+  datePick.focus({ preventScroll: true }); // the calendar anchors to (and tracks) its input
+  try { datePick.showPicker(); }
+  catch (e) { dateIn.focus({ preventScroll: true }); } // call not user-activated: give focus back to the visible field
+}
+if (calBtn) calBtn.addEventListener('click', openDatePicker);
+function onDatePickChange() {
+  const v = datePick.value; // native date values are always canonical YYYY-MM-DD ("" when cleared)
+  if (!v || v === dateIn.value) return;
+  dateIn.value = v;
+  dateIn.classList.remove('err');
+  dateIn.focus({ preventScroll: true }); // picked a date: put the caret in the visible field
+  dateIn.dispatchEvent(new Event('change', { bubbles: true }));
+}
+if (datePick) {
+  datePick.addEventListener('change', onDatePickChange);
+  datePick.addEventListener('input', onDatePickChange);
+  // If the calendar closes without a pick (Esc / click-away) and focus drops to
+  // nowhere, move it to the visible field — never leave the user typing into the
+  // invisible twin. Clicks that land on other controls keep their own focus.
+  datePick.addEventListener('focusout', e => {
+    if (!e.relatedTarget || e.relatedTarget === document.body) dateIn.focus({ preventScroll: true });
+  });
+}
+
+timeIn.addEventListener('change', () => {
+  const t = parseTimeIn(timeIn.value);
+  if (!t) {
+    timeIn.value = fmtTimeIn(state.time, state.h12); // revert
+    timeIn.classList.add('err');
+    setTimeout(() => timeIn.classList.remove('err'), 1200);
+    return;
+  }
+  const changed = t !== state.time;
+  state.time = t;
+  timeIn.value = fmtTimeIn(t, state.h12);
+  if (changed) { updateConvs(); saveState(); }
+});
+
+nowBtn.addEventListener('click', () => {
+  const w = wallNow(state.base.name);
+  state.date = toYmd(w);
+  state.time = `${pad(w.h)}:${pad(w.mi)}`;
+  setSelDate(state.date);
+  timeIn.value = fmtTimeIn(state.time, state.h12);
+  updateConvs();
+  saveState();
+});
+
+fmtSeg.querySelectorAll('button').forEach(b => {
+  b.addEventListener('click', () => {
+    const next = b.dataset.fmt === '12';
+    if (state.h12 === next) return;
+    state.h12 = next;
+    renderAll();
+  });
+});
+
+themeBtn.addEventListener('click', () => {
+  // always picks the opposite of what is displayed: the first click turns an
+  // auto (system-following) theme into an explicit, sticky choice
+  state.theme = resolvedTheme() === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  saveState();
+});
+// follow live changes of the OS/browser preference (a no-op when the user
+// has made an explicit choice, since the resolved theme then never changes)
+if (systemMQ && systemMQ.addEventListener) systemMQ.addEventListener('change', applyTheme);
+
+addBtn.addEventListener('click', () => {
+  if (!addComboApi.rawPick()) {
+    const input = $('#addIn');
+    input.classList.add('err');
+    setTimeout(() => input.classList.remove('err'), 1200);
+  }
+});
+
+resetBtn.addEventListener('click', () => {
+  try { localStorage.removeItem(LS_KEY); } catch (e) {}
+  state = makeState(true);
+  applyTheme();
+  renderAll();
+});
+
+// ---- Export / import (the user's backup) ----
+const exportBtn = $('#exportBtn');
+const importBtn = $('#importBtn');
+const importFile = $('#importFile');
+const importMsg = $('#importMsg');
+let importMsgTimer = null;
+
+// Feedback banner; auto-hides. The `.ok` class is the cyan success variant.
+function flashImport(text, ok) {
+  importMsg.textContent = text;
+  importMsg.classList.toggle('ok', !!ok);
+  importMsg.classList.remove('hidden');
+  if (importMsgTimer) clearTimeout(importMsgTimer);
+  importMsgTimer = setTimeout(() => importMsg.classList.add('hidden'), 5000);
+}
+
+// The full save as a downloadable JSON file (Blob + object URL + a
+// throwaway anchor; the URL is revoked once the download has started).
+function downloadExport() {
+  const url = URL.createObjectURL(new Blob([buildExport()], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'timezones.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Apply one file's text as the new full state. Validated by the same path as
+// loadState() (unknown zones dropped, duplicates collapsed, defaults for
+// missing fields); a file that is not a backup at all is rejected outright.
+function applyImportText(text) {
+  let s;
+  try { s = JSON.parse(text); }
+  catch (e) { flashImport('That file isn’t valid JSON — nothing was changed.'); return; }
+  const st = stateFromSave(s);
+  if (!st) { flashImport('That file doesn’t look like a Timezones backup — nothing was changed.'); return; }
+  // Replace, not merge: a confirm only when there is something to lose.
+  if (state.zones.length && !confirm('Replace your current setup with the imported one?')) return;
+  state = st;
+  applyTheme();
+  renderAll(); // also re-persists to localStorage
+  const n = st.zones.length;
+  flashImport(`Imported: base ${st.base.label}, ${n} other ${n === 1 ? 'place' : 'places'}.`, true);
+}
+
+exportBtn.addEventListener('click', downloadExport);
+importBtn.addEventListener('click', () => importFile.click());
+importFile.addEventListener('change', () => {
+  const f = importFile.files && importFile.files[0];
+  importFile.value = ''; // let the same file be offered again
+  if (!f) return;
+  f.text().then(applyImportText).catch(() => flashImport('Could not read that file.'));
+});
+
+/* ============================================================
+   Init
+   ============================================================ */
+(function init() {
+  let tzOk = true;
+  try { new Intl.DateTimeFormat('en', { timeZone: 'America/New_York' }); }
+  catch (e) { tzOk = false; }
+  if (!tzOk) {
+    document.querySelector('main').insertAdjacentHTML('afterbegin',
+      '<div class="banner">Your browser does not support timezone-aware formatting, so this app cannot work. Please use a current version of Chrome, Firefox, Edge, or Safari.</div>');
+    return;
+  }
+  state = loadState() || makeState(true);
+  applyTheme();
+  renderAll();
+  // Live clocks: the initial render above is already current; armTick then
+  // renders once per minute, exactly at the minute boundary (§5.5 in spec).
+  armTick();
+})();
+</script>
+</body>
+</html>
