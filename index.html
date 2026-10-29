@@ -193,6 +193,8 @@ header.top { padding-top: 28px; padding-bottom: 0; }
   letter-spacing: .1em; text-transform: uppercase;
   color: var(--dim); margin-bottom: 7px;
 }
+/* the date/time pickers + Now, grouped below the base card */
+.convert-row { margin-top: 16px; }
 
 #dateIn, #timeIn, .combo input {
   width: 100%;
@@ -535,23 +537,28 @@ input.err {
           <div class="dd hidden"></div>
         </div>
       </div>
-      <div class="field date">
-        <label class="flabel" for="dateIn">Date (YYYY-MM-DD)</label>
-        <input type="text" id="dateIn" autocomplete="off" spellcheck="false" placeholder="2026-10-03">
-        <input type="date" id="datePick" tabindex="-1" aria-hidden="true">
-        <button type="button" id="calBtn" class="calico" title="Pick a date" aria-label="Open date picker" aria-haspopup="dialog">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        </button>
-      </div>
-      <div class="field time">
-        <label class="flabel" for="timeIn">Time</label>
-        <input type="text" id="timeIn" autocomplete="off" spellcheck="false" placeholder="14:30">
-      </div>
-      <div class="field btnfield">
-        <button class="btn ghost" id="nowBtn" type="button">Now</button>
-      </div>
     </div>
     <div id="baseCardSlot"></div>
+    <div class="convert-row">
+      <span class="flabel">Convert date and time</span>
+      <div class="panel-row">
+        <div class="field date">
+          <label class="flabel" for="dateIn">Date (YYYY-MM-DD)</label>
+          <input type="text" id="dateIn" autocomplete="off" spellcheck="false" placeholder="2026-10-03">
+          <input type="date" id="datePick" tabindex="-1" aria-hidden="true">
+          <button type="button" id="calBtn" class="calico" title="Pick a date" aria-label="Open date picker" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </button>
+        </div>
+        <div class="field time">
+          <label class="flabel" for="timeIn">Time</label>
+          <input type="text" id="timeIn" autocomplete="off" spellcheck="false" placeholder="14:30">
+        </div>
+        <div class="field btnfield">
+          <button class="btn ghost" id="nowBtn" type="button">Now</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- Other timezones -->
@@ -2634,10 +2641,12 @@ function updateLive(el, z, baseMin) {
   const rel = el.querySelector('.zrel');
   if (rel) {
     const b = baseMin === undefined ? zoneOffsetMin(state.base.name, now) : baseMin;
-    if (b === 0) { rel.classList.add('hidden'); return; }
-    rel.classList.remove('hidden');
+    // The text is always written — even while hidden — so the chip never
+    // carries a stale (or empty) value across a zero-offset transition;
+    // hiding only suppresses the display.
     const baseName = `${state.base.label}${state.base.country ? ', ' + state.base.country : ''}`;
     rel.textContent = `${baseName} ${fmtRelDiff(zoneOffsetMin(z.name, now) - b)}`;
+    rel.classList.toggle('hidden', b === 0);
   }
 }
 
@@ -2997,7 +3006,15 @@ function tzdbEntry(name, target) {
 }
 
 // Search over the bundled dataset + every tzdb zone name + offsets.
-function searchZones(q, { current, exclude, emptyList, baseKey }) {
+// `exclude`   place keys to hide (the add field passes the location list —
+//             a place may appear in the locations once).
+// `zoneKeys`  place keys that are locations: their rows are marked
+//             "it’s a location" — in the base field that announces "picking
+//             this swaps the base, the card stays".
+// `baseKey`   the base place key: its row is marked "it’s your base" — in the
+//             add field picking it adds the base as a location, in the base
+//             field it is a no-op.
+function searchZones(q, { current, exclude, zoneKeys, emptyList, baseKey }) {
   const s = q.trim().toLowerCase();
   // Comma-separated country ("Mumbai, India") is ignored for name matching.
   const sCity = s.split(',')[0].trim();
@@ -3013,7 +3030,15 @@ function searchZones(q, { current, exclude, emptyList, baseKey }) {
       if (suppressed.length < 4) suppressed.push(z);
       return;
     }
-    out.push({ ...z, hint });
+    // Relabel rows whose place has a relationship with the current setup, so
+    // the effect of picking them is legible (the empty-query "base" label
+    // stands as-is).
+    let h = hint;
+    if (h !== 'base') {
+      if (baseKey && k === baseKey) h = 'it’s your base';
+      else if (zoneKeys && zoneKeys.has(k)) h = 'it’s a location';
+    }
+    out.push({ ...z, hint: h });
   };
   if (!s) {
     if (current) push(current, 'base');
@@ -3072,23 +3097,21 @@ function searchZones(q, { current, exclude, emptyList, baseKey }) {
       push(z, namey ? 'city' : z.country || (z.ianaTarget ? `→ ${z.ianaTarget}` : 'IANA zone'));
     }
   }
-  // 4. Never leave an empty dropdown: when every match is already
-  //    displayed, re-show those matches marked as such. When the dropdown
-  //    does have results, the base is still re-shown (marked) so picking it
-  //    gives feedback instead of silently vanishing; other duplicates stay
-  //    hidden — they're visible as cards, and picking one is rejected.
-  if (s && suppressed.length) {
-    const bk = baseKey || (current ? keyOf(current) : null);
-    for (const z of suppressed) {
-      if (!out.length || keyOf(z) === bk)
-        out.push({ ...z, hint: keyOf(z) === bk ? 'it’s your base' : 'already added' });
-    }
+  // 4. Never leave an empty dropdown: when every match is already displayed,
+  //    re-show those matches marked as such — they're visible as cards
+  //    anyway, and picking one is a rejected no-op. (The base field
+  //    suppresses nothing, so this only fires for the add field.)
+  if (s && suppressed.length && !out.length) {
+    for (const z of suppressed) out.push({ ...z, hint: 'already added' });
   }
   return out;
 }
 
+// The places already shown as *locations* — the set a new add must not
+// duplicate (a place may appear in the locations once). The base is
+// deliberately not in it: a place may be both the base and a location.
 function existingKeys() {
-  return new Set([keyOf(state.base), ...state.zones.map(keyOf)]);
+  return new Set(state.zones.map(keyOf));
 }
 
 /* ============================================================
@@ -3098,6 +3121,10 @@ let baseComboApi, addComboApi;
 
 function addZone(z) {
   if (!z) return;
+  // A place may appear in the locations once. The base isn't in that set on
+  // purpose: adding it is allowed (it gains an ordinary location card while
+  // the base card stays), so a place may be both the base and a location —
+  // that's what makes the base swappable to an existing place.
   if (existingKeys().has(keyOf(z))) return false;
   state.zones.push(z);
   renderGrid();
@@ -3118,7 +3145,11 @@ function removeZone(z) {
    ============================================================ */
 baseComboApi = makeCombo($('#baseCombo'), {
   keepAfterPick: true,
-  search: q => searchZones(q, { current: state.base, exclude: new Set(state.zones.map(keyOf)), emptyList: POPULAR, baseKey: keyOf(state.base) }),
+  // Nothing is excluded: a displayed location is a legitimate base, and
+  // picking it swaps the base while the card stays (the quick way to
+  // re-anchor onto one of your places). Those rows are marked
+  // "it’s a location" so the pick reads as intentional.
+  search: q => searchZones(q, { current: state.base, zoneKeys: new Set(state.zones.map(keyOf)), emptyList: POPULAR, baseKey: keyOf(state.base) }),
   onSelect: z => {
     if (keyOf(z) === keyOf(state.base)) return true;
     state.base = z;
@@ -3129,6 +3160,9 @@ baseComboApi = makeCombo($('#baseCombo'), {
 
 addComboApi = makeCombo($('#addCombo'), {
   keepAfterPick: false,
+  // exclude = the location cards (a place appears there once). The base is
+  // deliberately not excluded: its row is marked "it’s your base" and
+  // picking it adds the base as a location.
   search: q => searchZones(q, { current: null, exclude: existingKeys(), emptyList: POPULAR, baseKey: keyOf(state.base) }),
   onSelect: z => addZone(z)
 });

@@ -4,7 +4,7 @@
 
 A world clock and timezone converter in a single file.
 
-Pick a **base** timezone plus a date and time, and every other location
+Pick a **base** timezone plus a date and time, and every location
 you add shows two things: its **live current time**, and **what time it
 is there at the moment you picked** — with the local date, a day-shift
 badge when the day is different, and a marker while daylight saving is
@@ -40,12 +40,14 @@ then visit <http://localhost:8000>.
 ## A quick tour
 
 - **Base timezone** — type a city, an IANA zone (`Europe/London`), or a
-  UTC offset (`+05:30`) and pick a suggestion.
+  UTC offset (`+05:30`) and pick a suggestion. A place you already
+  display is pickable too: it becomes the base, and its card stays.
 - **Date & time** — the moment you want to convert; use the calendar
   icon or the **Now** button.
 - **Add a location** — as many as you like; each gets a card with its
   live clock and the converted time. Drag cards to reorder them, and
-  **×** removes one.
+  **×** removes one. Your base is addable here too — a place may be
+  both base and a location.
 - **?** — opens the illustrated help page, with diagrams of every
   control and card part.
 - **Export / Import** — in the footer: back up your whole setup to a
